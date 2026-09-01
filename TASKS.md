@@ -15,7 +15,7 @@ Rule: coding agents should work on one concrete task at a time unless the Archit
 # PHASE 0 — PROJECT FOUNDATION
 
 ## TASK-001 — Repository skeleton
-Status: TODO
+Status: DONE
 
 Goal:
 Create the basic repository layout, package metadata, TypeScript configuration, worker entry point, test setup, and documentation files.
