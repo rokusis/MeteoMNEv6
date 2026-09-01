@@ -42,7 +42,7 @@ Acceptance:
 ---
 
 ## TASK-003 — CI baseline
-Status: TODO
+Status: DONE
 
 Goal:
 Set up GitHub Actions for install, typecheck, lint where adopted, and tests.
