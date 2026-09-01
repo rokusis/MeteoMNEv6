@@ -51,3 +51,14 @@ Initial reviewer checklist:
 - [ ] unresolved research clearly marked
 
 No code review has been performed yet.
+
+---
+## REVIEW-001 — TASK-001 Repository skeleton
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-001 - temelj kuce, skeleton
+Commit: 1cdcd5c
+Findings: testovi 2 passed, build ok, 6 docs prisutni, wrangler + vitest rade
+Severity: none
+Required actions: nema
+Result: PASS - spremno za sledeci korak
