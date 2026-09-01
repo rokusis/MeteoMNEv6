@@ -62,3 +62,12 @@ Findings: testovi 2 passed, build ok, 6 docs prisutni, wrangler + vitest rade
 Severity: none
 Required actions: nema
 Result: PASS - spremno za sledeci korak
+
+---
+## REVIEW-002 — TASK-003 CI
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-003 CI baseline
+Commit: bc2fe47
+Findings: ci.yml 19 linija, Actions success, typecheck+test+build zeleni
+Result: PASS
