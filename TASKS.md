@@ -70,7 +70,7 @@ Acceptance:
 ---
 
 ## TASK-011 — HTTP client wrapper
-Status: TODO
+Status: DONE
 
 Goal:
 Create shared HTTP behavior for ZHMS requests.

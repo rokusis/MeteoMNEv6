@@ -71,3 +71,12 @@ Scope: TASK-003 CI baseline
 Commit: bc2fe47
 Findings: ci.yml 19 linija, Actions success, typecheck+test+build zeleni
 Result: PASS
+
+---
+## REVIEW-003 — TASK-011 postar
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-011 HTTP client
+Commit: 262152a
+Findings: zhmsFetch GET+UA+timeout OK, typecheck OK, 4 tests PASS, CI success
+Result: PASS
