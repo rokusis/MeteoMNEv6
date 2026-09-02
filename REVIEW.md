@@ -134,3 +134,12 @@ Scope: TASK-030 /api/stations live + cache
 Commit: 8591422
 Findings: fetch+classify+parse+normalize radi, /api/stations vraca prave podatke, kes cuva zadnje dobro kad je no data, 23 testa PASS, CI success
 Result: PASS
+
+---
+## REVIEW-010 — fix trailing comma + live deploy
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: parseStations/parseObservations cleanJson + deploy af6aa331
+Commit: cfc3d35 / deploy af6aa331
+Findings: JSON trailing comma fix, /api/stations 37 stanica uzivo OK (Bar 28.3, Berane 17.02), /api/status ok, CI success, prod fetch radi
+Result: PASS
