@@ -12,8 +12,17 @@ function card(s){
 function extCard(title, arr){
   if(!arr || !arr.length) return '<div class=ext><small>'+title+'</small><br>—<br><small>nema kandidata</small></div>';
   const getVal = (s) => title.includes('toplije')||title.includes('hladnije') ? (s.temperatureC!=null?s.temperatureC.toFixed(1)+'°C':'—') : title.includes('vjetar') ? (s.windSpeedMs!=null?s.windSpeedMs+' m/s':'—') : (s.precipitationMm!=null?s.precipitationMm+' mm':'—');
-  const rows = arr.map(s=> '<div style="margin:4px 0"><b>'+s.stationName+' '+getVal(s)+'</b><br><small>mjereno u '+s.measuredAtRaw+'</small> <small>'+s.stationId+'</small></div>').join('');
-  return '<div class=ext><small>'+title+'</small><br>'+rows+'</div>';
+  const allSame = arr.length>1 && arr.every(s=> getVal(s)===getVal(arr[0]));
+  const many = arr.length>6;
+  if(allSame && arr.length>10){
+    const v=getVal(arr[0]);
+    const msg = v==='0 mm' ? 'Nema padavina na svih '+arr.length+' stanica' : v==='0 m/s' ? 'Tišina (0 m/s) na svih '+arr.length+' stanica' : 'Sve '+arr.length+' stanica: '+v;
+    const first3 = arr.slice(0,3).map(s=> s.stationName).join(', ');
+    return '<div class=ext><small>'+title+'</small><br><b>'+msg+'</b><br><small>'+first3+' i još '+(arr.length-3)+'</small><br><small>mjereno u '+arr[0].measuredAtRaw+'</small></div>';
+  }
+  const rows = arr.slice(0,6).map(s=> '<div style="margin:4px 0"><b>'+s.stationName+' '+getVal(s)+'</b><br><small>mjereno u '+s.measuredAtRaw+'</small> <small>'+s.stationId+'</small></div>').join('');
+  const more = arr.length>6 ? '<small>... i još '+(arr.length-6)+' stanica</small>' : '';
+  return '<div class=ext><small>'+title+'</small><br>'+rows+more+'</div>';
 }
 async function load(){
   try{
