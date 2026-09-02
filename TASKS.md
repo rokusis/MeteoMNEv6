@@ -256,7 +256,7 @@ Acceptance:
 # PHASE 4 — CURRENT EXTREMES
 
 ## TASK-040 — Common current reference time
-Status: TODO
+Status: DONE
 
 Goal:
 Determine the newest relevant measurement timestamp from the current normalized station observations.
@@ -269,7 +269,7 @@ Acceptance:
 ---
 
 ## TASK-041 — 1-hour eligibility filter
-Status: TODO
+Status: DONE
 
 Goal:
 Include observations where age <= 1h relative to common reference time.
@@ -282,7 +282,7 @@ Acceptance:
 ---
 
 ## TASK-042 — Current extremes calculation
-Status: TODO
+Status: DONE
 
 Goal:
 Calculate:

@@ -152,3 +152,12 @@ Scope: TASK-024 D1 baza
 Commit: 6aae653
 Findings: D1 meteomne-v6-db WEUR OK, 3 tabele (stations, observations, source_status) OK, wrangler.toml binding OK, CI success
 Result: PASS
+
+---
+## REVIEW-012 — TASK-042 extremes
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-042 extremes 1h
+Commit: 4d6c662
+Findings: 1h eligibility OK, granica 1h ukljucena, tie OK, measuredAtRaw vraca se za diskretan prikaz, 28 testova PASS, CI success
+Result: PASS
