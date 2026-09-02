@@ -72,6 +72,25 @@ export default {
         const r = await getObservations(env.DB as any);
         return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: r.observations.length, stations: r.observations });
       }
+      if (url.pathname.match(/\/api\/stations\/[^\/]+\/timeseries/)) {
+        const parts=url.pathname.split('/'); const id=parts[3];
+        const par=url.searchParams.get('param')||'T'; const lim=parseInt(url.searchParams.get('limit')||'48',10);
+        try{
+          const { loadTimeseries }=await import('./lib/timeseriesDb');
+          const data=env.DB? await loadTimeseries(env.DB as any, id, par, lim) : [];
+          if(!data.length){
+            const tip = ['T','H','RR'].includes(par)?'G1':['BRV','PRV','MUV'].includes(par)?'G2':'G3';
+            const { fetchGraph }=await import('./sources/zhms-aws/fetchGraph');
+            const { parseDataAll }=await import('./sources/zhms-aws/parseGraph');
+            const html=await fetchGraph(tip as any, id);
+            const all=parseDataAll(html);
+            const pts=(all as any)[par]||[];
+            if(env.DB && pts.length) { const { saveTimeseries }=await import('./lib/timeseriesDb'); await saveTimeseries(env.DB as any, id, par, pts); }
+            return Response.json({ status:'ok', source:'live', param:par, count: pts.length, points: pts.slice(-lim) });
+          }
+          return Response.json({ status:'ok', source:'db', param:par, count:data.length, points:data });
+        }catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
       if (url.pathname.startsWith('/api/stations/')) {
         const id = url.pathname.split('/')[3];
         if (!id || id === 'extremes') return Response.json({ status: 'error', message: 'missing id' }, { status: 400 });
