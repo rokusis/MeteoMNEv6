@@ -170,3 +170,21 @@ Scope: TASK-043 /api/stations/extremes 1h
 Commit: d9e5931
 Findings: hottest/coldest/wind/precip OK, 1h eligibility, measuredAtRaw za diskretno, unavailable kad nema, 29 testova PASS, CI success
 Result: PASS
+
+---
+## REVIEW-014 — fix neaktivne + sve 0
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: extremes fix neaktivne i sve 0
+Commit: 8071b8a
+Findings: neaktivne iskljucene, sve 0 prikazuje poruku umjesto 37, mnogo tie prikazuje 3+broj, 29 testova PASS
+Result: PASS
+
+---
+## REVIEW-015 — fix referentno vrijeme
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: referentno vrijeme RAW
+Commit: fix ref
+Findings: referenceTimeRaw prikazuje 02.09.2026 22:20, ne UTC 2:10 AM, eligible 1h radi
+Result: PASS

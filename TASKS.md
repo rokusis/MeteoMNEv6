@@ -186,7 +186,7 @@ Acceptance:
 ---
 
 ## TASK-025 — Previous-known-good for AWS
-Status: TODO
+Status: DONE
 
 Goal:
 Prevent invalid AWS refreshes from destroying valid state.
@@ -199,7 +199,7 @@ Acceptance:
 ---
 
 ## TASK-026 — AWS freshness status
-Status: TODO
+Status: DONE
 
 Goal:
 Expose observation age and source sync status.
