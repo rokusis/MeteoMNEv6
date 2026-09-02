@@ -301,7 +301,7 @@ Acceptance:
 ---
 
 ## TASK-043 — Extremes API
-Status: TODO
+Status: DONE
 
 Endpoint target:
 `GET /api/stations/extremes`

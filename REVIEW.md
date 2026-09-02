@@ -161,3 +161,12 @@ Scope: TASK-042 extremes 1h
 Commit: 4d6c662
 Findings: 1h eligibility OK, granica 1h ukljucena, tie OK, measuredAtRaw vraca se za diskretan prikaz, 28 testova PASS, CI success
 Result: PASS
+
+---
+## REVIEW-013 — TASK-043 extremes api
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-043 /api/stations/extremes 1h
+Commit: d9e5931
+Findings: hottest/coldest/wind/precip OK, 1h eligibility, measuredAtRaw za diskretno, unavailable kad nema, 29 testova PASS, CI success
+Result: PASS
