@@ -11,9 +11,9 @@ function card(s){
 }
 function extCard(title, arr){
   if(!arr || !arr.length) return '<div class=ext><small>'+title+'</small><br>—<br><small>nema kandidata</small></div>';
-  const s=arr[0];
-  const val = title.includes('toplije')||title.includes('hladnije') ? (s.temperatureC!=null?s.temperatureC.toFixed(1)+'°C':'—') : title.includes('vjetar') ? (s.windSpeedMs!=null?s.windSpeedMs+' m/s':'—') : (s.precipitationMm!=null?s.precipitationMm+' mm':'—');
-  return '<div class=ext><small>'+title+'</small><br><b>'+s.stationName+' '+val+'</b><br><small>mjereno u '+s.measuredAtRaw+'</small><br><small>'+s.stationId+'</small></div>';
+  const getVal = (s) => title.includes('toplije')||title.includes('hladnije') ? (s.temperatureC!=null?s.temperatureC.toFixed(1)+'°C':'—') : title.includes('vjetar') ? (s.windSpeedMs!=null?s.windSpeedMs+' m/s':'—') : (s.precipitationMm!=null?s.precipitationMm+' mm':'—');
+  const rows = arr.map(s=> '<div style="margin:4px 0"><b>'+s.stationName+' '+getVal(s)+'</b><br><small>mjereno u '+s.measuredAtRaw+'</small> <small>'+s.stationId+'</small></div>').join('');
+  return '<div class=ext><small>'+title+'</small><br>'+rows+'</div>';
 }
 async function load(){
   try{
