@@ -89,7 +89,7 @@ Must NOT include:
 ---
 
 ## TASK-012 — Response classification
-Status: TODO
+Status: DONE
 
 Goal:
 Distinguish:

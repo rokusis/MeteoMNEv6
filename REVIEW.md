@@ -80,3 +80,12 @@ Scope: TASK-011 HTTP client
 Commit: 262152a
 Findings: zhmsFetch GET+UA+timeout OK, typecheck OK, 4 tests PASS, CI success
 Result: PASS
+
+---
+## REVIEW-004 — TASK-012 klasifikacija
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-012 response classification
+Commit: 2086dc6
+Findings: classifyBody 5 slucajeva OK, 200 nije dovoljno, 9 testova PASS, CI success
+Result: PASS
