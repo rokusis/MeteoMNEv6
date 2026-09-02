@@ -147,7 +147,7 @@ Acceptance:
 ---
 
 ## TASK-022 — AWS wind direction normalization
-Status: TODO
+Status: DONE
 
 Goal:
 Convert AWS direction code 0–32 into application-friendly representation.

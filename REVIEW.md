@@ -107,3 +107,12 @@ Scope: TASK-021 parse var posljednje
 Commit: 77a07ba
 Findings: Podgorica 21.5C/2.3m/s OK, prazno=undefined OK, 15 testova PASS, CI success
 Result: PASS
+
+---
+## REVIEW-007 — TASK-022 vjetar
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-022 wind 0-32
+Commit: 6ce97e1
+Findings: 16=180 S OK, 0=0 N OK, 33 undefined OK, 20 testova PASS, CI success
+Result: PASS
