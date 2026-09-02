@@ -160,7 +160,7 @@ Acceptance:
 ---
 
 ## TASK-023 — AWS normalized observation model
-Status: TODO
+Status: DONE
 
 Goal:
 Map source-specific AWS fields into shared `NormalizedStation` / `NormalizedObservation` models.

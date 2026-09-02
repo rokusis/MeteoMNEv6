@@ -116,3 +116,12 @@ Scope: TASK-022 wind 0-32
 Commit: 6ce97e1
 Findings: 16=180 S OK, 0=0 N OK, 33 undefined OK, 20 testova PASS, CI success
 Result: PASS
+
+---
+## REVIEW-008 — TASK-023 normalizacija
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-023 normalize
+Commit: f684e6b
+Findings: spajanje stanice+mjerenja OK, vjetar 180 S OK, nepoznata stanica preskocena, 22 testa PASS, CI success
+Result: PASS
