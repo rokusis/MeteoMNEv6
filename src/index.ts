@@ -1,7 +1,7 @@
 import { getObservations, getCache } from './sources/zhms-aws/live';
 import { calcExtremes } from './lib/extremes';
 export interface Env { DB?: D1Database; APP_NAME?: string; }
-const PAGE = `<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MeteoMNE</title><style>body{font-family:system-ui, sans-serif; margin:0; background:#f6f8fb; color:#0f172a}header{background:#0ea5e9; color:white; padding:16px 20px; position:sticky; top:0}h1{margin:0; font-size:20px}main{max-width:1000px; margin:0 auto; padding:16px}section{background:white; border-radius:12px; padding:14px; margin:12px 0; box-shadow:0 2px 8px rgba(0,0,0,.06)}h2{margin:0 0 8px; font-size:16px}small{color:#64748b}.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px}.card{border:1px solid #e2e8f0; border-radius:10px; padding:10px}.pill{display:inline-block; font-size:12px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:999px; margin-top:6px}.extremes{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px}.ext{border:1px solid #e2e8f0; border-radius:10px; padding:10px; background:#fff}.ext b{font-size:18px}#q{width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin:8px 0}</style></head><body><header><h1>MeteoMNE — uživo sa meteo.co.me</h1><small id="status">učitavanje...</small></header><main><section><h2>Aktuelni min/max <small>(u zadnjih 1 sat, vrijeme diskretno)</small></h2><div id="extremes" class="extremes">učitavanje...</div></section><section><h2>Sve stanice <small id="count"></small></h2><input id="q" placeholder="traži: Podgorica, Bar, Žabljak..."><div id="list" class="grid">učitavanje...</div></section><section><h2>Grafik temperature <small id="gtitle">(klikni stanicu)</small></h2><canvas id="chart" width="600" height="180" style="width:100%; background:#fff; border:1px solid #e2e8f0; border-radius:8px;"></canvas><small id="ginfo"></small></section></main><script>
+const PAGE = `<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MeteoMNE</title><style>body{font-family:system-ui, sans-serif; margin:0; background:#f6f8fb; color:#0f172a}header{background:#0ea5e9; color:white; padding:16px 20px; position:sticky; top:0}h1{margin:0; font-size:20px}main{max-width:1000px; margin:0 auto; padding:16px}section{background:white; border-radius:12px; padding:14px; margin:12px 0; box-shadow:0 2px 8px rgba(0,0,0,.06)}h2{margin:0 0 8px; font-size:16px}small{color:#64748b}.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px}.card{border:1px solid #e2e8f0; border-radius:10px; padding:10px}.pill{display:inline-block; font-size:12px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:999px; margin-top:6px}.extremes{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px}.ext{border:1px solid #e2e8f0; border-radius:10px; padding:10px; background:#fff}.ext b{font-size:18px}#q{width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin:8px 0}</style></head><body><header><h1>MeteoMNE — uživo sa meteo.co.me</h1><small id="status">učitavanje...</small></header><main><section><h2>Aktuelni min/max <small>(u zadnjih 1 sat, vrijeme diskretno)</small></h2><div id="extremes" class="extremes">učitavanje...</div></section><section><h2>Sve stanice <small id="count"></small></h2><input id="q" placeholder="traži: Podgorica, Bar, Žabljak..."><div id="list" class="grid">učitavanje...</div></section><section><h2>Grafik temperature <small id="gtitle">(klikni stanicu)</small></h2><div style="margin:6px 0"><button onclick="setRange(24)">24h</button> <button onclick="setRange(48)">48h</button> <button onclick="setRange(500)">Sve</button> <small id="ginfo"></small></div><canvas id="chart" width="800" height="200" style="width:100%; background:#fff; border:1px solid #e2e8f0; border-radius:8px; cursor:crosshair;"></canvas><small id="gtip" style="display:block; height:14px; color:#0369a1;"></small></section></main><script>
 async function j(u){const r=await fetch(u);return r.json()}
 function card(s){
   const t = s.temperatureC != null ? s.temperatureC.toFixed(1)+'°C' : '—';
@@ -38,11 +38,13 @@ async function load(){
     }
     qEl.addEventListener('input', render);
     const canvas=document.getElementById('chart'); const ctx=canvas.getContext('2d'); let curId=null;
+    let curRange=24; function setRange(n){ curRange=n; if(curId) draw(curId, document.getElementById('gtitle').textContent); }
+    window.setRange=setRange;
     async function draw(id, name){
       curId=id; document.getElementById('gtitle').textContent='— '+name+' (T zadnjih 24)';
       document.getElementById('ginfo').textContent='učitavanje...';
       try{
-        const d=await j('/api/stations/'+id+'/timeseries?param=T&limit=24');
+        const d=await j('/api/stations/'+id+'/timeseries?param=T&limit='+curRange);
         if(!d.points || !d.points.length){ document.getElementById('ginfo').textContent='nema podataka'; return; }
         document.getElementById('ginfo').textContent=d.count+' tačaka, izvor: '+d.source;
         const pts=d.points; const vals=pts.map(p=>p.value); const min=Math.min(...vals), max=Math.max(...vals);
@@ -55,6 +57,9 @@ async function load(){
           const y=H-pad - ((p.value-min)/(max-min||1))*(H-2*pad);
           if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
         }); ctx.stroke();
+        const tip=document.getElementById('gtip');
+        canvas.onmousemove=(e)=>{ const rect=canvas.getBoundingClientRect(); const x=e.clientX-rect.left; const idx=Math.round((x-pad)/(canvas.width-2*pad)*(pts.length-1)); if(idx>=0&&idx<pts.length){ const p=pts[idx]; tip.textContent=new Date(p.ts).toLocaleString()+' — '+p.value.toFixed(1)+'°C'; } };
+        canvas.onmouseleave=()=> tip.textContent='';
         ctx.fillStyle='#0369a1'; pts.forEach((p,i)=>{
           const x=pad + (i/(pts.length-1))*(W-2*pad);
           const y=H-pad - ((p.value-min)/(max-min||1))*(H-2*pad);
