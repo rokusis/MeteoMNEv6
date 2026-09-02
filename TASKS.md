@@ -124,7 +124,7 @@ Acceptance:
 ---
 
 ## TASK-021 — AWS current observation parser
-Status: TODO
+Status: DONE
 
 Source:
 `/Meteorologija/aws_m.php`

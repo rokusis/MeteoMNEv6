@@ -98,3 +98,12 @@ Scope: TASK-020 parse var stanice
 Commit: 8210d6a
 Findings: Podgorica 42.43648/19.27199 OK, aktivna/neaktivna OK, 12 testova PASS, CI success
 Result: PASS
+
+---
+## REVIEW-006 — TASK-021 mjerenja
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-021 parse var posljednje
+Commit: 77a07ba
+Findings: Podgorica 21.5C/2.3m/s OK, prazno=undefined OK, 15 testova PASS, CI success
+Result: PASS
