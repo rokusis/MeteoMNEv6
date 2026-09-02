@@ -9,9 +9,7 @@ export interface RawObservation {
   windDirectionCode?: number;
   gustMs?: number;
 }
-
 const POSLJEDNJE_RE = /var\s+posljednje\s*=\s*(\{[\s\S]*?\});/;
-
 function toNum(v: any): number | undefined {
   if (v === '' || v == null) return undefined;
   const n = Number(String(v).replace(',', '.'));
@@ -22,11 +20,14 @@ function toInt(v: any): number | undefined {
   const n = parseInt(String(v), 10);
   return Number.isFinite(n) ? n : undefined;
 }
-
+function cleanJson(s: string): string {
+  return s.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
+}
 export function parseObservations(rawHtml: string): RawObservation[] {
   const m = rawHtml.match(POSLJEDNJE_RE);
   if (!m) throw new Error('var posljednje not found');
-  const obj = JSON.parse(m[1]) as Record<string, any[]>;
+  const jsonStr = cleanJson(m[1]);
+  const obj = JSON.parse(jsonStr) as Record<string, any[]>;
   const out: RawObservation[] = [];
   for (const group of Object.values(obj)) {
     for (const r of group as any[]) {
