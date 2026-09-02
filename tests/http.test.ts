@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { zhmsFetch, HttpError } from '../src/lib/http';
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('zhmsFetch - postar', () => {
   it('salje GET i User-Agent', async () => {
