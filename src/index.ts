@@ -46,7 +46,7 @@ async function load(){
       extCard('najslabiji vjetar', e.weakestWind) +
       extCard('najviše kiše', e.mostPrecipitation) +
       extCard('najmanje kiše', e.leastPrecipitation) +
-      '<div class=ext><small>referentno vrijeme</small><br><b>'+ (e.referenceTime? new Date(e.referenceTime).toLocaleString() : '—') +'</b><br><small>eligible: '+e.eligibleCount+'</small></div>';
+      '<div class=ext><small>referentno vrijeme</small><br><b>'+ (e.referenceTime? e.referenceTimeRaw || e.referenceTime : '—') +'</b><br><small>eligible: '+e.eligibleCount+'</small></div>';
   }catch(e){ document.getElementById('status').textContent='greška: '+e; }
 }
 load();

@@ -22,6 +22,7 @@ export function filterEligible(observations: NormalizedObservation[], ref: Date,
 }
 export interface Extremes {
   referenceTime: string | null;
+  referenceTimeRaw: string | null;
   eligibleCount: number;
   hottest: NormalizedObservation[];
   coldest: NormalizedObservation[];
@@ -32,6 +33,13 @@ export interface Extremes {
 }
 export function calcExtremes(observations: NormalizedObservation[]): Extremes {
   const ref=getReferenceTime(observations);
+  let refRaw: string | null = null;
+  if(ref){
+    let maxObs: NormalizedObservation | null = null;
+    let maxDate: Date | null = null;
+    for(const o of observations){ const d=parseMeasuredAt(o.measuredAtRaw); if(!d) continue; if(!maxDate||d>maxDate){ maxDate=d; maxObs=o; } }
+    refRaw = maxObs ? maxObs.measuredAtRaw : null;
+  }
   const eligible=ref?filterEligible(observations,ref,1):[];
   const refIso=ref?ref.toISOString():null;
   function extremesFor(getVal:(o:NormalizedObservation)=>number|undefined, findMax:boolean): NormalizedObservation[] {
@@ -43,6 +51,7 @@ export function calcExtremes(observations: NormalizedObservation[]): Extremes {
   }
   return {
     referenceTime: refIso,
+    referenceTimeRaw: refRaw,
     eligibleCount: eligible.length,
     hottest: extremesFor(o=>o.temperatureC, true),
     coldest: extremesFor(o=>o.temperatureC, false),
