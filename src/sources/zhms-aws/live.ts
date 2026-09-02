@@ -13,7 +13,7 @@ export async function fetchAwsLive(): Promise<NormalizedObservation[]> {
   const res = await zhmsFetch(AWS_URL);
   const text = await res.text();
   const kind = classifyBody(text);
-  if (kind !== 'valid') throw new Error(`AWS invalid kind=${kind} status=${res.status}`);
+  if (kind !== 'valid') throw new Error(`AWS invalid kind=${kind} status=${res.status} body=${text.slice(0,120)}`);
   const stations = parseStations(text);
   const rawObs = parseObservations(text);
   const normalized = normalizeObservations(stations, rawObs);
@@ -32,7 +32,11 @@ export async function getObservationsWithCache(): Promise<{ observations: Normal
     return { observations: obs, fromCache: false, fetchedAt: cache!.fetchedAt };
   } catch (e: any) {
     lastError = String(e?.message ?? e);
+    // Ako je TLS problem u lokalnom dev okruzenju, vrati citljiv error
+    if (lastError.toLowerCase().includes('certificate') || lastError.toLowerCase().includes('ssl')) {
+      lastError = 'TLS cert problem u lokalnom dev (Codespace) - na pravom Cloudflare Workers ce raditi. Probaj deploy. Detalj: ' + lastError;
+    }
     if (cache) return { observations: cache.observations, fromCache: true, fetchedAt: cache.fetchedAt, error: lastError };
-    throw e;
+    throw new Error(lastError);
   }
 }
