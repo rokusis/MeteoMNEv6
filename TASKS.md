@@ -215,7 +215,7 @@ Acceptance:
 # PHASE 3 — CURRENT API
 
 ## TASK-030 — Stations API
-Status: TODO
+Status: DONE
 
 Endpoint target:
 `GET /api/stations`
