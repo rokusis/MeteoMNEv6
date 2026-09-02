@@ -321,3 +321,18 @@ The project may be continued by another model/provider.
 
 Consequence:
 The owner supplies artifacts and task status, while AI agents read the repo and continue from durable state.
+
+---
+
+# DEC-025 — Aktuelni min/max eligibility 1 sat (promjena sa 2h)
+
+Decision:
+Eligibility za Aktuelni min/max je 1 sat umjesto 2 sata. Na prikazu min/max diskretno prikazati vrijeme mjerenja.
+
+Why:
+Owner je promijenio odluku na 1h za svježije podatke i traži da korisnik vidi tačno vrijeme kad je mjereno.
+
+Consequence:
+Sva mjesta sa 2h (ARCHITECTURE, MASTER_SPECIFICATION, TASKS, kod) mijenjaju se u 1h. API za extremes mora vracati measuredAt za svaki ekstrem da frontend moze diskretno prikazati vrijeme.
+
+Date: 2026-09-02

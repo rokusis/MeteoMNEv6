@@ -288,7 +288,7 @@ Current normalized observations
              |
       determine reference
              |
-      apply <= 2h eligibility
+      apply <= 1h eligibility
              |
    exclude invalid/ineligible
              |

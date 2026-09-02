@@ -268,14 +268,14 @@ Acceptance:
 
 ---
 
-## TASK-041 — 2-hour eligibility filter
+## TASK-041 — 1-hour eligibility filter
 Status: TODO
 
 Goal:
-Include observations where age <= 2h relative to common reference time.
+Include observations where age <= 1h relative to common reference time.
 
 Acceptance:
-- exact 2h boundary included;
+- exact 1h boundary included;
 - older values excluded;
 - missing timestamps excluded.
 
