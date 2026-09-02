@@ -3,3 +3,8 @@ main = "src/index.ts"
 compatibility_date = "2024-06-20"
 [vars]
 APP_NAME = "MeteoMNEv6"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "meteomne-v6-db"
+database_id = "0ac5c323-4e8b-4f6e-91e0-6ad652962410"
