@@ -172,7 +172,7 @@ Acceptance:
 ---
 
 ## TASK-024 — AWS persistence
-Status: TODO
+Status: DONE
 
 Goal:
 Persist stations and current observations in D1.
