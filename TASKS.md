@@ -107,7 +107,7 @@ HTTP 200 alone never marks a response valid.
 # PHASE 2 — AWS CURRENT
 
 ## TASK-020 — AWS station metadata parser
-Status: TODO
+Status: DONE
 
 Source:
 `/Meteorologija/aws_m.php`

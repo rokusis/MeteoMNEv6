@@ -89,3 +89,12 @@ Scope: TASK-012 response classification
 Commit: 2086dc6
 Findings: classifyBody 5 slucajeva OK, 200 nije dovoljno, 9 testova PASS, CI success
 Result: PASS
+
+---
+## REVIEW-005 — TASK-020 stanice
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-020 parse var stanice
+Commit: 8210d6a
+Findings: Podgorica 42.43648/19.27199 OK, aktivna/neaktivna OK, 12 testova PASS, CI success
+Result: PASS
