@@ -23,5 +23,6 @@ export const NUMERICAL_STATIONS = {
   ZAB: "Žabljak",
   PLJ: "Pljevlja",
   ADB: "Ada Bojana",
+  PET: "Petnjica",
 } as const;
 export type StationCode = keyof typeof NUMERICAL_STATIONS;
