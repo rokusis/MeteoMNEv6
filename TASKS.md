@@ -317,7 +317,7 @@ Acceptance:
 # PHASE 5 — AWS TIME SERIES
 
 ## TASK-050 — AWS graph fetcher
-Status: TODO
+Status: DONE
 
 Source:
 `/Meteorologija/aws-graph.php?v={tip}&s={ID}`
@@ -330,7 +330,7 @@ Acceptance:
 ---
 
 ## TASK-051 — DataAll parser
-Status: TODO
+Status: DONE
 
 Parse:
 - G1 RR/T/H;
@@ -345,7 +345,7 @@ Acceptance:
 ---
 
 ## TASK-052 — Time-series persistence
-Status: TODO
+Status: DONE
 
 Goal:
 Persist normalized time-series data efficiently in D1.
@@ -353,7 +353,7 @@ Persist normalized time-series data efficiently in D1.
 ---
 
 ## TASK-053 — Time-series API
-Status: TODO
+Status: DONE
 
 Endpoint target:
 `GET /api/stations/:id/timeseries`

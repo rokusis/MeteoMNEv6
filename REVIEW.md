@@ -188,3 +188,30 @@ Scope: referentno vrijeme RAW
 Commit: fix ref
 Findings: referenceTimeRaw prikazuje 02.09.2026 22:20, ne UTC 2:10 AM, eligible 1h radi
 Result: PASS
+
+---
+## REVIEW-016 — TASK-050 graph fetcher
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-050 fetchGraph G1/G2/G3
+Commit: 2888084
+Findings: buildGraphUrl OK, DataAll valid/no_data OK, 4 testa PASS, CI success
+Result: PASS
+
+---
+## REVIEW-017 — TASK-051 DataAll parser
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-051 parseDataAll G1/G2/G3
+Commit: 7bc9a08
+Findings: G1 T/H/RR, G2 BRV/PRV/MUV, G3 GR/P OK, bez navodnika + trailing comma fix, 130 tacaka, 36 testova PASS
+Result: PASS
+
+---
+## REVIEW-018 — TASK-052/053 timeseries
+Date: 2026-09-02
+Reviewer: AI Reviewer
+Scope: TASK-052/053 timeseries DB+API
+Commit: b05794a
+Findings: D1 station_timeseries tabela OK, /api/stations/:id/timeseries live+db OK, 5 grupa T+H/RR/BRV/P/GR, interaktivni grafik 24h/48h/Sve OK, 36 testova PASS
+Result: PASS
