@@ -180,6 +180,21 @@ export default {
       if (url.pathname === '/api/hydro') {
         try { const { getHydro }=await import('./sources/hydro/liveHydro'); const r=await getHydro(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, countStations:r.stations.length, countObs:r.observations.length, stations:r.stations, observations:r.observations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
+      if (url.pathname === '/api/forecast/numerical') {
+        const city = url.searchParams.get('city') || url.searchParams.get('station') || 'POD';
+        const model = (url.searchParams.get('model') || 'e3km') as any;
+        const dayParam = url.searchParams.get('day');
+        try {
+          const { fetchNumericalDay, fetchNumericalAll } = await import('./sources/numerical/liveNumerical');
+          if (dayParam) {
+            const d = await fetchNumericalDay(city as any, model, parseInt(dayParam,10));
+            return Response.json({ status:'ok', city, model, day: parseInt(dayParam,10), data: d });
+          } else {
+            const all = await fetchNumericalAll(city as any, model);
+            return Response.json({ status:'ok', city, model, count: all.length, days: all });
+          }
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
       if (url.pathname === '/api/forecast/official') {
         try { const { getOfficial }=await import('./sources/zhms-official-forecast/liveOfficial'); const r=await getOfficial(); return Response.json({ status:'ok', ...r }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
