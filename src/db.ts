@@ -5,10 +5,10 @@ export async function saveStations(db: D1Database, stations: Station[]): Promise
   const now = new Date().toISOString();
   for (const s of stations) {
     await db.prepare(
-      `INSERT INTO stations (station_id, wmo_id, name, latitude, longitude, elevation, station_type, is_active, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(station_id) DO UPDATE SET wmo_id=excluded.wmo_id, name=excluded.name, latitude=excluded.latitude, longitude=excluded.longitude, elevation=excluded.elevation, station_type=excluded.station_type, is_active=excluded.is_active, updated_at=excluded.updated_at`
-    ).bind(s.stationId, s.wmoId ?? null, s.name, s.latitude, s.longitude, s.elevation ?? null, s.stationType ?? null, s.statusFlag === 1 || s.statusFlag === '1' ? 1 : 0, now).run();
+      `INSERT INTO stations (station_id, wmo_id, name, latitude, longitude, elevation, station_type, river, is_active, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(station_id) DO UPDATE SET wmo_id=excluded.wmo_id, name=excluded.name, latitude=excluded.latitude, longitude=excluded.longitude, elevation=excluded.elevation, station_type=excluded.station_type, river=excluded.river, is_active=excluded.is_active, updated_at=excluded.updated_at`
+    ).bind(s.stationId, (s as any).wmoId ?? null, s.name, s.latitude, s.longitude, s.elevation ?? null, (s as any).stationType ?? s.stationType ?? null, (s as any).river ?? null, s.statusFlag === 1 || s.statusFlag === '1' || (s as any).flag === 1 ? 1 : 0, now).run();
   }
 }
 
