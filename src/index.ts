@@ -97,7 +97,12 @@ async function load(){
         const h=await j('/api/hydro');
         document.getElementById('hydroStatus').textContent='• stanica: '+h.countStations+' • mjerenja: '+h.countObs;
         const list=h.observations||[];
-        document.getElementById('hydroList').innerHTML = list.length ? list.map(o=> '<div class=card><b>'+o.name+'</b><br>vodostaj: '+(o.waterLevelCm!=null?o.waterLevelCm+' cm':'—')+'<br>temp vode: '+(o.waterTempC!=null?o.waterTempC+'°C':'—')+'<br><small>'+(o.measuredAtRaw||'')+' • '+o.stationId+'</small></div>').join('') : '<small>nema hidro mjerenja</small>';
+        const stationMap=new Map((h.stations||[]).map(s=>[s.id, s]));
+        document.getElementById('hydroList').innerHTML = list.length ? list.map(o=>{
+          const st=stationMap.get(o.stationId);
+          const river=st?.river ? ' — '+st.river : '';
+          return '<div class=card><b>'+o.name+river+'</b><br>vodostaj: '+(o.waterLevelCm!=null?o.waterLevelCm+' cm':'—')+'<br>temp vode: '+(o.waterTempC!=null?o.waterTempC+'°C':'—')+'<br><small>'+(o.measuredAtRaw||'')+' • '+o.stationId+(river?' • '+st.river:'')+'</small></div>';
+        }).join('') : '<small>nema hidro mjerenja</small>';
       }catch(e){ document.getElementById('hydroStatus').textContent='greška: '+e; }
     })();
     // more i snijeg
