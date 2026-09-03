@@ -242,3 +242,12 @@ Scope: stranica ispod grafika
 Commit: 95f6617
 Findings: more i snijeg prikaz ispod grafika, sea/snow API poziv, 38 testova PASS
 Result: PASS
+
+---
+## REVIEW-023 — hydro komplet
+Date: 2026-09-03
+Reviewer: AI Reviewer
+Scope: TASK-060/061/062 hydro
+Commit: 93b07bb / 7c69b92
+Findings: staniceH 42 sa svih 9 polja (WMO, river, flag), posljednje 37 (Pljevlja 52cm Ćehotina), /api/hydro OK, D1 river kolona, stranica prikazuje rijeku, 39 testova PASS
+Result: PASS

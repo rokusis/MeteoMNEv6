@@ -367,8 +367,7 @@ Acceptance:
 
 # PHASE 6 — HYDROLOGY
 
-## TASK-060 — Hydrology metadata adapter
-Status: TODO
+## TASK-060 —
 
 Source:
 `/Hidrologija/aws_h.php`
@@ -377,8 +376,7 @@ Parse `staniceH`.
 
 ---
 
-## TASK-061 — Hydrology observation adapter
-Status: TODO
+## TASK-061 —
 
 Parse hydrology `posljednje`.
 
@@ -390,8 +388,7 @@ Acceptance:
 
 ---
 
-## TASK-062 — Hydrology persistence/API
-Status: TODO
+## TASK-062 —
 
 Create normalized storage and API only after source contract is validated.
 
