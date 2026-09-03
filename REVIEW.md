@@ -224,3 +224,21 @@ Scope: TASK-070/071 parse sea/snow
 Commit: ab13371
 Findings: seaH/seaT i snowH2/snowT2 parse OK, 37 testova PASS, CI success
 Result: PASS
+
+---
+## REVIEW-020 — fix more HTML tabela
+Date: 2026-09-03
+Reviewer: AI Reviewer
+Scope: parseSeaSnow HTML tabela
+Commit: 9cb8b50
+Findings: seaT je HTML tabela ne niz, sea 3 (Herceg Novi 28, Bar 28, Ulcinj 27) OK, snow 0 ljeti OK, 38 testova PASS
+Result: PASS
+
+---
+## REVIEW-021 — stranica more/snijeg
+Date: 2026-09-03
+Reviewer: AI Reviewer
+Scope: stranica ispod grafika
+Commit: 95f6617
+Findings: more i snijeg prikaz ispod grafika, sea/snow API poziv, 38 testova PASS
+Result: PASS
