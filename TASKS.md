@@ -453,7 +453,7 @@ Do not assign a definitive application meaning to unresolved `USN` until proven.
 # PHASE 10 — OFFICIAL FORECAST
 
 ## TASK-100 — Official forecast parser
-Status: TODO
+Status: DONE
 
 Source:
 `/page.php?id=31`

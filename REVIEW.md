@@ -251,3 +251,12 @@ Scope: TASK-060/061/062 hydro
 Commit: 93b07bb / 7c69b92
 Findings: staniceH 42 sa svih 9 polja (WMO, river, flag), posljednje 37 (Pljevlja 52cm Ćehotina), /api/hydro OK, D1 river kolona, stranica prikazuje rijeku, 39 testova PASS
 Result: PASS
+
+---
+## REVIEW-024 — zvanicna prognoza
+Date: 2026-09-03
+Reviewer: AI Reviewer
+Scope: TASK-100 zvanicna prognoza
+Commit: 413712a / b8d3fff
+Findings: tab_a/b/c sa tacnim datumima (Petak, Subota), ne danas/sjutra, slike apsolutne https://, seafarer OK, 40 testova PASS, stranica prikazuje 3 slike
+Result: PASS
