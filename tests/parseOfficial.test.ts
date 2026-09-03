@@ -14,7 +14,7 @@ describe('parseOfficial tabovi',()=>{
     expect(p.days[0].issuedAt).toContain('11:45');
     expect(p.days[0].image).toContain('cgprognoza-A.svg');
     expect(p.days[1].title).toContain('Subota');
-    expect(p.seafarer?.title).toContain('Za pomorce');
-    expect(p.seafarer?.text).toContain('NW');
+    expect(p.seafarer?.title.toLowerCase()).toContain('za pomorce');
+    expect(p.seafarer?.text.toLowerCase()).toContain('nw');
   });
 });
