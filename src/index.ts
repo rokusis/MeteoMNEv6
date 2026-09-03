@@ -1,82 +1,88 @@
 import { getObservations, getCache } from './sources/zhms-aws/live';
 import { calcExtremes } from './lib/extremes';
 export interface Env { DB?: D1Database; APP_NAME?: string; }
-const PAGE = `<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MeteoMNE</title><style>body{font-family:system-ui, sans-serif; margin:0; background:#f6f8fb; color:#0f172a}header{background:#0ea5e9; color:white; padding:16px 20px; position:sticky; top:0}h1{margin:0; font-size:20px}main{max-width:1000px; margin:0 auto; padding:16px}section{background:white; border-radius:12px; padding:14px; margin:12px 0; box-shadow:0 2px 8px rgba(0,0,0,.06)}h2{margin:0 0 8px; font-size:16px}small{color:#64748b}.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px}.card{border:1px solid #e2e8f0; border-radius:10px; padding:10px}.pill{display:inline-block; font-size:12px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:999px; margin-top:6px}.extremes{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px}.ext{border:1px solid #e2e8f0; border-radius:10px; padding:10px; background:#fff}.ext b{font-size:18px}#q{width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin:8px 0}</style></head><body><header><h1>MeteoMNE — uživo sa meteo.co.me</h1><small id="status">učitavanje...</small></header><main><section><h2>Aktuelni min/max <small>(u zadnjih 1 sat, vrijeme diskretno)</small></h2><div id="extremes" class="extremes">učitavanje...</div></section><section><h2>Sve stanice <small id="count"></small></h2><input id="q" placeholder="traži: Podgorica, Bar, Žabljak..."><div id="list" class="grid">učitavanje...</div></section><section><h2>Grafik temperature <small id="gtitle">(klikni stanicu)</small></h2><div style="margin:6px 0"><small>Grupa:</small> <button onclick="setGroup('TH')">T+H</button> <button onclick="setGroup('RR')">Kiša</button> <button onclick="setGroup('BRV')">Vjetar</button> <button onclick="setGroup('P')">Pritisak</button> <button onclick="setGroup('GR')">Insolacija</button> <span style="margin-left:12px"><small>Raspon:</small> <button onclick="setRange(24)">24h</button> <button onclick="setRange(48)">48h</button> <button onclick="setRange(500)">Sve</button></span> <small id="ginfo"></small></div><canvas id="chart" width="800" height="200" style="width:100%; background:#fff; border:1px solid #e2e8f0; border-radius:8px; cursor:crosshair;"></canvas><small id="gtip" style="display:block; height:14px; color:#0369a1;"></small></section></main><script>
+const PAGE = `<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MeteoMNE</title><style>body{font-family:system-ui,sans-serif;margin:0;background:#f6f8fb;color:#0f172a}header{background:#0ea5e9;color:white;padding:16px 20px;position:sticky;top:0}h1{margin:0;font-size:20px}main{max-width:1000px;margin:0 auto;padding:16px}section{background:white;border-radius:12px;padding:14px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.06)}h2{margin:0 0 8px;font-size:16px}small{color:#64748b}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}.card{border:1px solid #e2e8f0;border-radius:10px;padding:10px}.pill{display:inline-block;font-size:12px;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:999px;margin-top:6px}.extremes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.ext{border:1px solid #e2e8f0;border-radius:10px;padding:10px;background:#fff}.ext b{font-size:18px}#q{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:8px 0}</style></head><body><header><h1>MeteoMNE — uživo sa meteo.co.me</h1><small id="status">učitavanje...</small></header><main><section><h2>Aktuelni min/max <small>(u zadnjih 1 sat, vrijeme diskretno)</small></h2><div id="extremes" class="extremes">učitavanje...</div></section><section><h2>Sve stanice <small id="count"></small></h2><input id="q" placeholder="traži: Podgorica, Bar, Žabljak..."><div id="list" class="grid">učitavanje...</div></section><section><h2>Grafik temperature <small id="gtitle">(klikni stanicu)</small></h2><div style="margin:6px 0"><small>Grupa:</small> <button onclick="setGroup('TH')">T+H</button> <button onclick="setGroup('RR')">Kiša</button> <button onclick="setGroup('BRV')">Vjetar</button> <button onclick="setGroup('P')">Pritisak</button> <button onclick="setGroup('GR')">Insolacija</button> <span style="margin-left:12px"><small>Raspon:</small> <button onclick="setRange(24)">24h</button> <button onclick="setRange(48)">48h</button> <button onclick="setRange(500)">Sve</button></span> <small id="ginfo"></small></div><canvas id="chart" width="800" height="200" style="width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:8px;cursor:crosshair;"></canvas><small id="gtip" style="display:block;height:14px;color:#0369a1;"></small></section></main><script>
 async function j(u){const r=await fetch(u);return r.json()}
-function card(s){
-  const t = s.temperatureC != null ? s.temperatureC.toFixed(1)+'°C' : '—';
-  const w = s.windSpeedMs != null ? s.windSpeedMs+' m/s' + (s.windCompass? ' '+s.windCompass:'') : '—';
-  const p = s.precipitationMm != null ? s.precipitationMm+' mm' : '—';
-  return '<div class=card><b>'+s.stationName+'</b><br><b style="font-size:20px">'+t+'</b><br><small>'+s.measuredAtRaw+'</small><br><small>vjetar: '+w+'<br>kiša: '+p+'</small><div class=pill>'+s.stationId+'</div></div>';
-}
+function card(s){const t=s.temperatureC!=null?s.temperatureC.toFixed(1)+'°C':'—';const w=s.windSpeedMs!=null?s.windSpeedMs+' m/s'+(s.windCompass?' '+s.windCompass:''):'—';const p=s.precipitationMm!=null?s.precipitationMm+' mm':'—';return '<div class=card><b>'+s.stationName+'</b><br><b style="font-size:20px">'+t+'</b><br><small>'+s.measuredAtRaw+'</small><br><small>vjetar: '+w+'<br>kiša: '+p+'</small><div class=pill>'+s.stationId+'</div></div>';}
 function extCard(title, arr){
   if(!arr || !arr.length) return '<div class=ext><small>'+title+'</small><br>—<br><small>nema kandidata</small></div>';
-  const getVal = (s) => title.includes('toplije')||title.includes('hladnije') ? (s.temperatureC!=null?s.temperatureC.toFixed(1)+'°C':'—') : title.includes('vjetar') ? (s.windSpeedMs!=null?s.windSpeedMs+' m/s':'—') : (s.precipitationMm!=null?s.precipitationMm+' mm':'—');
-  const allSame = arr.length>1 && arr.every(s=> getVal(s)===getVal(arr[0]));
-  const many = arr.length>6;
+  const getVal=(s)=> title.includes('toplije')||title.includes('hladnije') ? (s.temperatureC!=null?s.temperatureC.toFixed(1)+'°C':'—') : title.includes('vjetar') ? (s.windSpeedMs!=null?s.windSpeedMs+' m/s':'—') : (s.precipitationMm!=null?s.precipitationMm+' mm':'—');
+  const allSame=arr.length>1 && arr.every(s=> getVal(s)===getVal(arr[0]));
+  const many=arr.length>6;
   if(allSame && arr.length>10){
     const v=getVal(arr[0]);
-    const msg = v==='0 mm' ? 'Nema padavina na svih '+arr.length+' stanica' : v==='0 m/s' ? 'Tišina (0 m/s) na svih '+arr.length+' stanica' : 'Sve '+arr.length+' stanica: '+v;
-    const first3 = arr.slice(0,3).map(s=> s.stationName).join(', ');
+    const msg=v==='0 mm' ? 'Nema padavina na svih '+arr.length+' stanica' : v==='0 m/s' ? 'Tišina (0 m/s) na svih '+arr.length+' stanica' : 'Sve '+arr.length+' stanica: '+v;
+    const first3=arr.slice(0,3).map(s=> s.stationName).join(', ');
     return '<div class=ext><small>'+title+'</small><br><b>'+msg+'</b><br><small>'+first3+' i još '+(arr.length-3)+'</small><br><small>mjereno u '+arr[0].measuredAtRaw+'</small></div>';
   }
-  const rows = arr.slice(0,6).map(s=> '<div style="margin:4px 0"><b>'+s.stationName+' '+getVal(s)+'</b><br><small>mjereno u '+s.measuredAtRaw+'</small> <small>'+s.stationId+'</small></div>').join('');
-  const more = arr.length>6 ? '<small>... i još '+(arr.length-6)+' stanica</small>' : '';
+  const rows=arr.slice(0,6).map(s=> '<div style="margin:4px 0"><b>'+s.stationName+' '+getVal(s)+'</b><br><small>mjereno u '+s.measuredAtRaw+'</small> <small>'+s.stationId+'</small></div>').join('');
+  const more=arr.length>6 ? '<small>... i još '+(arr.length-6)+' stanica</small>' : '';
   return '<div class=ext><small>'+title+'</small><br>'+rows+more+'</div>';
 }
 async function load(){
   try{
-    const [st, ex] = await Promise.all([j('/api/stations'), j('/api/stations/extremes')]);
-    document.getElementById('status').textContent = 'stanica: '+st.count+' • izvor: meteo.co.me • '+ new Date().toLocaleString();
-    document.getElementById('count').textContent = '('+st.count+')';
-    const all = st.stations;
-    const qEl = document.getElementById('q');
-    function render(){
-      const q = qEl.value.toLowerCase();
-      const f = q ? all.filter(s=> (s.stationName+' '+s.stationId).toLowerCase().includes(q)) : all;
-      document.getElementById('list').innerHTML = f.map(card).join('') || '<small>nema rezultata</small>';
-    }
-    qEl.addEventListener('input', render);
-    const canvas=document.getElementById('chart'); const ctx=canvas.getContext('2d'); let curId=null;
-    let curRange=24; let curGroup='TH';
-    function setRange(n){ curRange=n; if(curId) draw(curId, curGroup); }
-    function setGroup(g){ curGroup=g; if(curId) draw(curId, curGroup); }
-    window.setGroup=setGroup;
-    window.setRange=setRange;
-    async function draw(id, group){
-      const nameEl=document.getElementById('gtitle');
-      // group je TH, RR, BRV, P, GR - ako je pozvano kao draw(id,name) onda je group zapravo name
-      let gid=id; let gname=group;
+    const [st, ex]=await Promise.all([j('/api/stations'), j('/api/stations/extremes')]);
+    document.getElementById('status').textContent='stanica: '+st.count+' • izvor: meteo.co.me • '+ new Date().toLocaleString();
+    document.getElementById('count').textContent='('+st.count+')';
+    const all=st.stations;
+    const qEl=document.getElementById('q');
+    function render(){ const q=qEl.value.toLowerCase(); const f=q ? all.filter(s=> (s.stationName+' '+s.stationId).toLowerCase().includes(q)) : all; document.getElementById('list').innerHTML=f.map(card).join('') || '<small>nema rezultata</small>'; }
+    qEl.addEventListener('input', render); render();
+    document.getElementById('extremes').innerHTML= extCard('najtoplije', ex.hottest)+extCard('najhladnije', ex.coldest)+extCard('najjači vjetar', ex.strongestWind)+extCard('najslabiji vjetar', ex.weakestWind)+extCard('najviše kiše', ex.mostPrecipitation)+extCard('najmanje kiše', ex.leastPrecipitation)+'<div class=ext><small>referentno vrijeme</small><br><b>'+(ex.referenceTimeRaw||ex.referenceTime||'—')+'</b><br><small>eligible: '+ex.eligibleCount+'</small></div>';
+    // grafik
+    const canvas=document.getElementById('chart'); const ctx=canvas.getContext('2d'); let curId=null; let curRange=24; let curGroup='TH';
+    window.setRange=(n)=>{ curRange=n; if(curId) draw(curId, curGroup); };
+    window.setGroup=(g)=>{ curGroup=g; if(curId) draw(curId, curGroup); };
+    async function draw(gid, group){
+      let gname=group;
       if(typeof group==='string' && group.includes('—')){ gname=group; group=curGroup; } else if(typeof group==='string' && !['TH','RR','BRV','P','GR'].includes(group)){ gname=group; group=curGroup; }
       curId=gid;
-
-      curId=id; document.getElementById('gtitle').textContent='— '+name+' (T zadnjih 24)';
-      document.getElementById('ginfo').textContent='učitavanje...';
-      try{
-
-        if(!d.points || !d.points.length){ document.getElementById('ginfo').textContent='nema podataka'; return; }
-        document.getElementById('ginfo').textContent=d.count+' tačaka, izvor: '+d.source;
-        const pts=d.points; const vals=pts.map(p=>p.value); const min=Math.min(...vals), max=Math.max(...vals);
-        const W=canvas.width, H=canvas.height, pad=20;
-        ctx.clearRect(0,0,W,H);
-        ctx.strokeStyle='#e2e8f0'; ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
-        ctx.strokeStyle='#0ea5e9'; ctx.lineWidth=2; ctx.beginPath();
+      const titleMap={TH:'T+H',RR:'Kiša',BRV:'Vjetar',P:'Pritisak',GR:'Insolacija'};
+      document.getElementById('gtitle').textContent='— '+gname+' ('+(titleMap[group]||group)+')';
+      let params=[], labels=[];
+      if(group==='TH'){ params=['T','H']; labels=['T (°C)','H (%)']; }
+      else if(group==='RR'){ params=['RR']; labels=['Kiša (mm)']; }
+      else if(group==='BRV'){ params=['BRV']; labels=['Vjetar (m/s)']; }
+      else if(group==='P'){ params=['P']; labels=['Pritisak (hPa)']; }
+      else if(group==='GR'){ params=['GR']; labels=['Insolacija (W/m2)']; }
+      else { params=['T']; labels=['T (°C)']; }
+      const allData=[];
+      for(let i=0;i<params.length;i++){
+        const d=await j('/api/stations/'+gid+'/timeseries?param='+params[i]+'&limit='+curRange);
+        allData.push({param:params[i], label:labels[i], points:d.points||[]});
+      }
+      const pts=allData[0]?.points||[];
+      if(!pts.length){ document.getElementById('ginfo').textContent='nema podataka za '+labels.join(', '); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+      document.getElementById('ginfo').textContent=allData.map(a=> a.label+': '+a.points.length).join(' | ')+' tačaka';
+      let allVals=[]; allData.forEach(a=> a.points.forEach(p=>{if(p.value!=null) allVals.push(p.value)}));
+      if(!allVals.length){ document.getElementById('ginfo').textContent='nema vrijednosti'; return; }
+      const min=Math.min(...allVals), max=Math.max(...allVals);
+      const W=canvas.width, H=canvas.height, pad=24;
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle='#e2e8f0'; ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+      const colors=['#0ea5e9','#22c55e','#f97316','#8b5cf6','#eab308'];
+      allData.forEach((a,ai)=>{
+        const pts=a.points;
+        ctx.strokeStyle=colors[ai%colors.length]; ctx.lineWidth=2; ctx.beginPath();
         pts.forEach((p,i)=>{
-          const x=pad + (i/(pts.length-1))*(W-2*pad);
+          const x=pad + (i/(pts.length-1||1))*(W-2*pad);
           const y=H-pad - ((p.value-min)/(max-min||1))*(H-2*pad);
           if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
         }); ctx.stroke();
-        const tip=document.getElementById('gtip');
-        canvas.onmousemove=(e)=>{ const rect=canvas.getBoundingClientRect(); const x=e.clientX-rect.left; const idx=Math.round((x-pad)/(canvas.width-2*pad)*(pts.length-1)); if(idx>=0&&idx<pts.length){ const p=pts[idx]; tip.textContent=new Date(p.ts).toLocaleString()+' — '+p.value.toFixed(1)+'°C'; } };
-        canvas.onmouseleave=()=> tip.textContent='';
-        ctx.fillStyle='#0369a1'; pts.forEach((p,i)=>{
-          const x=pad + (i/(pts.length-1))*(W-2*pad);
-          const y=H-pad - ((p.value-min)/(max-min||1))*(H-2*pad);
-          ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill();
-        });
-      }catch(e){ document.getElementById('ginfo').textContent='greška: '+e; }
+      });
+      const tip=document.getElementById('gtip');
+      canvas.onmousemove=(e)=>{
+        const rect=canvas.getBoundingClientRect(); const x=e.clientX-rect.left;
+        const idx=Math.round((x-pad)/(canvas.width-2*pad)*((pts.length-1)||1));
+        if(idx>=0&&idx<pts.length){
+          const p=pts[idx];
+          let txt=new Date(p.ts).toLocaleString()+' — ';
+          txt+=allData.map(a=> a.label+': '+(a.points[idx]?.value!=null?a.points[idx].value:'—')).join(' | ');
+          tip.textContent=txt;
+        }
+      };
+      canvas.onmouseleave=()=> tip.textContent='';
     }
-    // klik na karticu
     document.getElementById('list').addEventListener('click', (e)=>{
       const card=e.target.closest('.card');
       if(!card) return;
@@ -84,18 +90,7 @@ async function load(){
       const name=card.querySelector('b')?.textContent;
       if(id) draw(id, name);
     });
-    // auto prvi
-    setTimeout(()=>{ const first=document.querySelector('.card .pill'); if(first) { const c=first.closest('.card'); const id=first.textContent; const nm=c.querySelector('b').textContent; draw(id,nm); } }, 1500);
-    render();
-    const e = ex;
-    document.getElementById('extremes').innerHTML =
-      extCard('najtoplije', e.hottest) +
-      extCard('najhladnije', e.coldest) +
-      extCard('najjači vjetar', e.strongestWind) +
-      extCard('najslabiji vjetar', e.weakestWind) +
-      extCard('najviše kiše', e.mostPrecipitation) +
-      extCard('najmanje kiše', e.leastPrecipitation) +
-      '<div class=ext><small>referentno vrijeme</small><br><b>'+ (e.referenceTime? e.referenceTimeRaw || e.referenceTime : '—') +'</b><br><small>eligible: '+e.eligibleCount+'</small></div>';
+    setTimeout(()=>{ const first=document.querySelector('.card .pill'); if(first){ const c=first.closest('.card'); const id=first.textContent; const nm=c.querySelector('b').textContent; draw(id,nm); } }, 1000);
   }catch(e){ document.getElementById('status').textContent='greška: '+e; }
 }
 load();
@@ -117,10 +112,6 @@ export default {
         if (ex.eligibleCount === 0) return Response.json({ status: 'unavailable', message: 'no eligible stations in last 1h', referenceTime: ex.referenceTime, eligibleCount: 0 });
         return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, ...ex });
       }
-      if (url.pathname === '/api/stations') {
-        const r = await getObservations(env.DB as any);
-        return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: r.observations.length, stations: r.observations });
-      }
       if (url.pathname.match(/\/api\/stations\/[^\/]+\/timeseries/)) {
         const parts=url.pathname.split('/'); const id=parts[3];
         const par=url.searchParams.get('param')||'T'; const lim=parseInt(url.searchParams.get('limit')||'48',10);
@@ -139,6 +130,10 @@ export default {
           }
           return Response.json({ status:'ok', source:'db', param:par, count:data.length, points:data });
         }catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
+      if (url.pathname === '/api/stations') {
+        const r = await getObservations(env.DB as any);
+        return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: r.observations.length, stations: r.observations });
       }
       if (url.pathname.startsWith('/api/stations/')) {
         const id = url.pathname.split('/')[3];
