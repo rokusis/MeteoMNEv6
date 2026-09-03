@@ -131,6 +131,12 @@ export default {
           return Response.json({ status:'ok', source:'db', param:par, count:data.length, points:data });
         }catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
+      if (url.pathname === '/api/sea') {
+        try { const { getSeaSnow }=await import('./sources/zhms-sea-snow/liveSeaSnow'); const r=await getSeaSnow(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, count:r.sea.length, sea:r.sea }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
+      if (url.pathname === '/api/snow') {
+        try { const { getSeaSnow }=await import('./sources/zhms-sea-snow/liveSeaSnow'); const r=await getSeaSnow(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, count:r.snow.length, snow:r.snow }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
       if (url.pathname === '/api/stations') {
         const r = await getObservations(env.DB as any);
         return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: r.observations.length, stations: r.observations });
