@@ -400,7 +400,7 @@ Create normalized storage and API only after source contract is validated.
 # PHASE 7 — SEA / SNOW
 
 ## TASK-070 — Sea adapter
-Status: TODO
+Status: DONE
 
 Source:
 `/Meteorologija/TTRR/sneg-talasi.php`
@@ -408,7 +408,7 @@ Source:
 ---
 
 ## TASK-071 — Snow adapter
-Status: TODO
+Status: DONE
 
 Source:
 `/Meteorologija/TTRR/sneg-talasi.php`
