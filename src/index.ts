@@ -100,10 +100,10 @@ async function load(){
         const sea=o.seafarer;
         let html='';
         days.forEach(d=>{
-          html+='<div class=card><b>'+d.title+'</b><br><small>'+(d.issuedAt||'')+'</small><br><p style="margin:6px 0">'+d.text.slice(0,400)+'</p>'+(d.image?'<img src="'+d.image+'" style="max-width:100%;height:auto;border:1px solid #e2e8f0;border-radius:8px;" onerror="this.style.display='none'">':'')+'</div>';
+          html+='<div class=card><b>'+d.title+'</b><br><small>'+(d.issuedAt||'')+'</small><br><p style="margin:6px 0">'+d.text.slice(0,400)+'</p>'+(d.image?'<img src="'+d.image+'" style="max-width:100%;height:auto;border:1px solid #e2e8f0;border-radius:8px;" onerror="this.style.display=\'none\'">':'')+'</div>';
         });
         if(sea){
-          html+='<div class=card style="background:#f0f9ff"><b>'+sea.title+'</b><br><small>'+(sea.issuedAt||'')+'</small><br><p style="margin:6px 0">'+sea.text.slice(0,500)+'</p>'+(sea.image?'<img src="'+sea.image+'" style="max-width:100%;height:auto;border:1px solid #e2e8f0;border-radius:8px;" onerror="this.style.display='none'">':'')+'</div>';
+          html+='<div class=card style="background:#f0f9ff"><b>'+sea.title+'</b><br><small>'+(sea.issuedAt||'')+'</small><br><p style="margin:6px 0">'+sea.text.slice(0,500)+'</p>'+(sea.image?'<img src="'+sea.image+'" style="max-width:100%;height:auto;border:1px solid #e2e8f0;border-radius:8px;" onerror="this.style.display=\'none\'">':'')+'</div>';
         }
         document.getElementById('offList').innerHTML = html || '<small>nema prognoze</small>';
       }catch(e){ document.getElementById('offStatus').textContent='greška: '+e; }
