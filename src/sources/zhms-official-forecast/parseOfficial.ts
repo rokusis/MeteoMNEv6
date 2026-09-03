@@ -14,7 +14,8 @@ function extractTab(html: string, tabId: string): { title: string; text: string;
   const text = stripHtml(t2[1]);
   const issuedAt = t3 ? stripHtml(t3[1]) : undefined;
   const imgM = slice.match(/<img[^>]+src="([^"]+cgprognoza[^"]*\.svg[^"]*)"/i) || slice.match(/<img[^>]+src="([^"]+\.svg[^"]*)"/i);
-  const image = imgM ? imgM[1] : undefined;
+  let image = imgM ? imgM[1] : undefined;
+  if (image && image.startsWith("/")) image = "https://www.meteo.co.me" + image;
   if (!text || text.length < 5) return null;
   return { title, text: text.slice(0, 1500), issuedAt, image };
 }
