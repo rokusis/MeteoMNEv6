@@ -13,9 +13,9 @@ function extractTab(html: string, tabId: string): { title: string; text: string;
   const title = stripHtml(t1[1]);
   const text = stripHtml(t2[1]);
   const issuedAt = t3 ? stripHtml(t3[1]) : undefined;
+  let image: string | undefined;
   const imgM = slice.match(/<img[^>]+src="([^"]+cgprognoza[^"]*\.svg[^"]*)"/i) || slice.match(/<img[^>]+src="([^"]+\.svg[^"]*)"/i);
-  let image = imgM ? imgM[1] : undefined;
-  if (image && image.startsWith("/")) image = "https://www.meteo.co.me" + image;
+  if (imgM) image = imgM[1];
   if (image && image.startsWith("/")) image = "https://www.meteo.co.me" + image;
   if (!text || text.length < 5) return null;
   return { title, text: text.slice(0, 1500), issuedAt, image };
@@ -26,10 +26,13 @@ function extractSeafarer(html: string): { title: string; text: string; issuedAt?
   const m = slice.match(/<div class="prognoza-text">\s*([\s\S]*?)\s*<\/div>/i);
   if (m) {
     const text = stripHtml(m[1]);
+    let image: string | undefined;
     const imgM = slice.match(/<img[^>]+src="([^"]+jjadran[^"]*\.svg[^"]*)"/i);
+    if (imgM) image = imgM[1];
+    if (image && image.startsWith("/")) image = "https://www.meteo.co.me" + image;
     const titleM = slice.match(/<div class="prognoza-title">\s*([^<]+?)\s*<\/div>/i);
     const signM = slice.match(/<div class="prognoza-sign"[^>]*>\s*([^<]+?)\s*<\/div>/i);
-    return { title: titleM ? stripHtml(titleM[1]) : "Za pomorce", text: text.slice(0, 1500), issuedAt: signM ? stripHtml(signM[1]) : undefined, image: imgM ? imgM[1] : undefined };
+    return { title: titleM ? stripHtml(titleM[1]) : "Za pomorce", text: text.slice(0, 1500), issuedAt: signM ? stripHtml(signM[1]) : undefined, image };
   }
   const idx = html.toLowerCase().indexOf('za pomorce');
   if (idx !== -1) {
