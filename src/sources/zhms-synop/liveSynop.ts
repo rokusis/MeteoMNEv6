@@ -1,6 +1,7 @@
 import { zhmsFetch } from '../../lib/http';
 import { parseSynop } from './parseSynop';
 import { synopKind } from './weatherKind';
+import { fullWeatherText } from './weatherFull';
 
 const SYNOP_URL = 'https://www.meteo.co.me/synopT.php';
 
@@ -15,7 +16,9 @@ export async function fetchSynopLive(): Promise<{ meta: any; stations: any[] }> 
   if (!parsed.stations.length) throw new Error('SYNOP empty');
   const stations = parsed.stations.map(s => {
     const k = synopKind(s.ww, s.obl, s.VBNobl);
-    return { ...s, synopText: k.text, synopSymbolIndex: k.symbolIndex, synopStatus: k.status };
+    const fullText = fullWeatherText(text, s.ww, s.obl, s.VBNobl);
+    const finalText = fullText ?? k.text;
+    return { ...s, synopText: finalText, synopSymbolIndex: k.symbolIndex, synopStatus: finalText ? 'OK' : 'UNRESOLVED' };
   });
   cache = { meta: parsed.meta, stations, fetchedAt: new Date().toISOString() };
   lastError = null;
