@@ -249,7 +249,23 @@ export default {
         const r = await getObservations(env.DB as any);
         const one = r.observations.find((o: any) => o.stationId === id);
         if (!one) return Response.json({ status: 'error', message: 'not found' }, { status: 404 });
-        return Response.json({ status: 'ok', fromCache: r.fromCache, station: one });
+        let station: any = { ...one };
+        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const s=await getSynop(); const { attachSynopKind }=await import('./sources/zhms-synop/mergeWithAws'); const m=attachSynopKind(one, s.stations); station = { ...station, synopText: m.synopText ?? null, synopSymbolIndex: m.synopSymbolIndex ?? null, synopStatus: m.synopStatus, synopSat: m.synopSat ?? null }; } catch {}
+        try {
+          if (env.DB) {
+            const { loadTimeseries }=await import('./lib/timeseriesDb');
+            const h=await loadTimeseries(env.DB as any, id, 'H', 1);
+            const pp=await loadTimeseries(env.DB as any, id, 'P', 1);
+            const gr=await loadTimeseries(env.DB as any, id, 'GR', 1);
+            station.humidityPct = h.length ? h[0].value : null;
+            station.humidityTs = h.length ? h[0].ts : null;
+            station.pressureHpa = pp.length ? pp[0].value : null;
+            station.pressureTs = pp.length ? pp[0].ts : null;
+            station.insolationWm2 = gr.length ? gr[0].value : null;
+            station.insolationTs = gr.length ? gr[0].ts : null;
+          }
+        } catch {}
+        return Response.json({ status: 'ok', fromCache: r.fromCache, station });
       }
       return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     } catch (e: any) {
