@@ -190,10 +190,10 @@ export default {
         try {
           const { fetchNumericalDay, fetchNumericalAll } = await import('./sources/numerical/liveNumerical');
           if (dayParam) {
-            const d = await fetchNumericalDay(city as any, model, parseInt(dayParam,10));
+            const d = await fetchNumericalDay(city as any, model, parseInt(dayParam,10), env.DB as any);
             return Response.json({ status:'ok', city, model, day: parseInt(dayParam,10), data: d });
           } else {
-            const all = await fetchNumericalAll(city as any, model);
+            const all = await fetchNumericalAll(city as any, model, env.DB as any);
             return Response.json({ status:'ok', city, model, count: all.length, days: all });
           }
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
