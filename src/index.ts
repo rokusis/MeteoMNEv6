@@ -108,7 +108,6 @@ async function load(){
           });
         });
         html+='</tbody></table>';
-        });
         document.getElementById('numList').innerHTML=html||'<small>nema podataka</small>';
         document.getElementById('numStatus').textContent='• '+r.count+' dana';
       }catch(e){ document.getElementById('numStatus').textContent='greška: '+e; }
