@@ -463,21 +463,21 @@ Source:
 # PHASE 11 — NUMERICAL FORECAST
 
 ## TASK-110 — Numerical forecast resource discovery
-Status: TODO
+Status: DONE
 
 Map actual city/model/location resource patterns before coding a generalized parser.
 
 ---
 
 ## TASK-111 — Numerical forecast parser
-Status: TODO
+Status: DONE
 
 Parse the 5-day static HTML products after the source contract is confirmed.
 
 ---
 
 ## TASK-112 — Conditional request support
-Status: TODO
+Status: DONE
 
 Use Last-Modified/ETag where reliable.
 

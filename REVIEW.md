@@ -260,3 +260,12 @@ Scope: TASK-100 zvanicna prognoza
 Commit: 413712a / b8d3fff
 Findings: tab_a/b/c sa tacnim datumima (Petak, Subota), ne danas/sjutra, slike apsolutne https://, seafarer OK, 40 testova PASS, stranica prikazuje 3 slike
 Result: PASS
+
+---
+## REVIEW-025 — numericka komplet
+Date: 2026-09-03
+Reviewer: AI Reviewer
+Scope: TASK-110/111 numericka
+Commit: 3a85ad1 / b9dfcf7
+Findings: 25 gradova (POD..PET), 5 dana, 8 termina UTC, Tmin/Tmax, simbol/RR/RH/vjetar, tabela sa ikonicama, 46 testova PASS
+Result: PASS
