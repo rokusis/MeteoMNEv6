@@ -15,6 +15,7 @@ export interface NormalizedStation {
 
 export interface NormalizedObservation {
   stationId: string;
+  wmoId?: string;
   stationName: string;
   measuredAtRaw: string;
   temperatureC?: number;
@@ -52,6 +53,7 @@ export function normalizeObservations(stations: Station[], observations: RawObse
     if (!st) continue;
     out.push({
       stationId: o.stationId,
+      wmoId: st.wmoId,
       stationName: st.name,
       measuredAtRaw: o.measuredAtRaw,
       temperatureC: o.temperatureC,
