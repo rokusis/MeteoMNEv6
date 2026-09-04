@@ -235,7 +235,13 @@ export default {
       }
       if (url.pathname === '/api/stations') {
         const r = await getObservations(env.DB as any);
-        return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: r.observations.length, stations: r.observations });
+        let synopList: any[] = [];
+        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const s=await getSynop(); synopList=s.stations; } catch {}
+        let stations = r.observations;
+        if (synopList.length) {
+          try { const { attachSynopKind }=await import('./sources/zhms-synop/mergeWithAws'); stations = r.observations.map((o: any) => { const m = attachSynopKind(o, synopList); return { ...o, synopText: m.synopText ?? null, synopSymbolIndex: m.synopSymbolIndex ?? null, synopStatus: m.synopStatus, synopSat: m.synopSat ?? null }; }); } catch {}
+        }
+        return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: stations.length, stations });
       }
       if (url.pathname.startsWith('/api/stations/')) {
         const id = url.pathname.split('/')[3];
