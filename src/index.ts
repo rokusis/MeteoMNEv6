@@ -198,6 +198,13 @@ export default {
       if (url.pathname === '/api/forecast/official') {
         try { const { getOfficial }=await import('./sources/zhms-official-forecast/liveOfficial'); const r=await getOfficial(); return Response.json({ status:'ok', ...r }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
+      if (url.pathname === '/api/numerical-log') {
+        try {
+          if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
+          const {results} = await env.DB.prepare(`SELECT city, model, last_modified, etag, checked_at, status FROM numerical_log ORDER BY checked_at DESC LIMIT 100`).all();
+          return Response.json({ status:'ok', count: results.length, logs: results });
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
       if (url.pathname === '/api/stations') {
         const r = await getObservations(env.DB as any);
         return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: r.observations.length, stations: r.observations });
