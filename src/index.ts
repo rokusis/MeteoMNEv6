@@ -98,9 +98,16 @@ async function load(){
       document.getElementById('numStatus').textContent='učitavanje '+city+' '+model+'...';
       try{
         const r=await j('/api/forecast/numerical?city='+city+'&model='+model);
-        let html='';
+        let html='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Vrijeme (UTC)</th><th>Simbol</th><th>Kiša (mm)</th><th>Vlažnost (%)</th><th>Vjetar</th></tr></thead><tbody>';
         (r.days||[]).forEach(d=>{
-          html+='<div class=card><b>'+(d.date||'')+'</b> — Tmin '+ (d.tmin!=null?d.tmin+'°C':'—')+' / Tmax '+(d.tmax!=null?d.tmax+'°C':'—')+'<br><small>'+d.hours.map(h=> h.utcHour+':'+(h.symbol||'')+' '+ (h.rrMm!=null?h.rrMm+'mm':'')+' '+ (h.windCode||'')).join(' | ').slice(0,300)+'</small></div>';
+          html+='<tr><td colspan=5 style="background:#e0f2fe;font-weight:bold">'+(d.date||'')+' — Tmin '+(d.tmin!=null?d.tmin+'°C':'—')+' / Tmax '+(d.tmax!=null?d.tmax+'°C':'—')+'</td></tr>';
+          d.hours.forEach(h=>{
+            const simUrl = h.symbol ? 'https://www.meteo.co.me/Meteorologija/Pr/Gradovi/Simbolcici/' + h.symbol + '.svg' : '';
+            const windUrl = h.windCode ? 'https://www.meteo.co.me/Meteorologija/Pr/Gradovi/Simbolcici/V/' + h.windCode + '.svg' : '';
+            html+='<tr><td>'+h.utcHour+':00</td><td>'+(h.symbol?'<img src="'+simUrl+'" style="width:24px;height:24px">'+'<br><small>'+h.symbol+'</small>':'—')+'</td><td>'+(h.rrMm!=null?h.rrMm:'—')+'</td><td>'+(h.rhPct!=null?h.rhPct:'—')+'</td><td>'+(h.windCode?'<img src="'+windUrl+'" style="width:24px;height:24px"><br><small>'+h.windCode+'</small>':'—')+'</td></tr>';
+          });
+        });
+        html+='</tbody></table>';
         });
         document.getElementById('numList').innerHTML=html||'<small>nema podataka</small>';
         document.getElementById('numStatus').textContent='• '+r.count+' dana';
