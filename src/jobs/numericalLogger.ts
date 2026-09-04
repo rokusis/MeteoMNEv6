@@ -7,10 +7,19 @@ export async function logNumericalSentinel(db: D1Database): Promise<void> {
     const folder = model==="a3km"?"5danaA":"5danaE";
     const url = `https://www.meteo.co.me/Meteorologija/Pr/Gradovi/${folder}/${city}-${letter}${day}.html`;
     try {
-      const res = await fetch(url, { method: "HEAD" });
-      const lm = res.headers.get("last-modified") || res.headers.get("Last-Modified") || null;
+      // uzmi zadnji Last-Modified iz baze da posaljemo If-Modified-Since
+      let lastMod: string | null = null;
+      try {
+        const row = await db.prepare(`SELECT last_modified FROM numerical_log WHERE city=? AND model=? ORDER BY checked_at DESC LIMIT 1`).bind(city, model).first() as any;
+        lastMod = row?.last_modified || null;
+      } catch {}
+      const headers: Record<string,string> = {};
+      if (lastMod) headers["If-Modified-Since"] = lastMod;
+      const res = await fetch(url, { method: "GET", headers });
+      const lm = res.headers.get("last-modified") || res.headers.get("Last-Modified") || lastMod;
       const etag = res.headers.get("etag") || res.headers.get("ETag") || null;
       const status = String(res.status);
+      // 304 znaci nije se mijenjao, 200 znaci jeste
       await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, lm, etag, now, status).run();
     } catch (e:any) {
       await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, null, null, now, "error:"+String(e?.message??e).slice(0,120)).run();
