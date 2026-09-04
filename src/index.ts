@@ -230,6 +230,9 @@ export default {
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
+      if (url.pathname === '/api/synop') {
+        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const r=await getSynop(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, error:r.error ?? null, meta:r.meta, count:r.stations.length, stations:r.stations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:503}); }
+      }
       if (url.pathname === '/api/stations') {
         const r = await getObservations(env.DB as any);
         return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: r.observations.length, stations: r.observations });
