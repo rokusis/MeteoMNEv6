@@ -269,3 +269,12 @@ Scope: TASK-110/111 numericka
 Commit: 3a85ad1 / b9dfcf7
 Findings: 25 gradova (POD..PET), 5 dana, 8 termina UTC, Tmin/Tmax, simbol/RR/RH/vjetar, tabela sa ikonicama, 46 testova PASS
 Result: PASS
+
+---
+## REVIEW-026 — synop raw + kind + merge
+Date: 2026-09-04
+Reviewer: AI Reviewer
+Scope: TASK-080.1 / 080.2 / 080.3
+Commit: ee7e4f0 / 8af9053 / 17101e8
+Findings: parse sinop sifra/naziv/sat/ww/obl/VBNobl OK, no data odbijeno, kind daje Pretežno vedro + index, ww>=4 UNRESOLVED, merge ne dira AWS T/vetar, 54 testa PASS, CI success
+Result: PASS
