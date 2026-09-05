@@ -159,7 +159,15 @@ load();
 <\/script></body></html>`;
 export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-    try { const { logNumericalSentinel } = await import('./jobs/numericalLogger'); if (env.DB) await logNumericalSentinel(env.DB as any); } catch(e){ console.error('numerical log cron error', e); }
+    try {
+      if (event.cron === "*/2 * * * *") {
+        const { fetchAndPersist } = await import('./sources/zhms-aws/live');
+        if (env.DB) await fetchAndPersist(env.DB as any);
+      } else {
+        const { logNumericalSentinel } = await import('./jobs/numericalLogger');
+        if (env.DB) await logNumericalSentinel(env.DB as any);
+      }
+    } catch(e){ console.error('cron error', e); }
   },
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);

@@ -28,6 +28,17 @@ export async function fetchAndPersist(db: D1Database): Promise<any[]> {
 }
 
 export async function getObservations(db: D1Database): Promise<{ observations: any[]; fromCache: boolean; fetchedAt?: string; error?: string }> {
+  if (db) {
+    try {
+      const st = await db.prepare(`SELECT last_success_at as lastOk FROM source_status WHERE source='aws'`).first() as any;
+      const fromDb = await loadObservations(db);
+      if (fromDb.length > 0) {
+        const ageMs = st?.lastOk ? Date.now() - Date.parse(st.lastOk) : Infinity;
+        if (Number.isFinite(ageMs) && ageMs < 10 * 60 * 1000) return { observations: fromDb, fromCache: true, fetchedAt: st.lastOk };
+        if (!Number.isFinite(ageMs)) return { observations: fromDb, fromCache: true };
+      }
+    } catch {}
+  }
   try {
     const obs = await fetchAndPersist(db);
     return { observations: obs, fromCache: false, fetchedAt: memCache!.fetchedAt };

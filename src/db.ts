@@ -24,9 +24,10 @@ export async function saveObservations(db: D1Database, obs: NormalizedObservatio
 }
 
 export async function loadObservations(db: D1Database): Promise<NormalizedObservation[]> {
-  const { results } = await db.prepare(`SELECT s.station_id, s.name as stationName, s.is_active, o.* FROM observations o JOIN stations s ON s.station_id = o.station_id`).all();
+  const { results } = await db.prepare(`SELECT s.station_id, s.wmo_id, s.name as stationName, s.is_active, o.* FROM observations o JOIN stations s ON s.station_id = o.station_id`).all();
   return (results as any[]).map(r => ({
     stationId: r.station_id,
+    wmoId: r.wmo_id ?? null,
     stationName: r.stationName,
     measuredAtRaw: r.measured_at_raw,
     temperatureC: r.temperature_c,
