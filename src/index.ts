@@ -298,6 +298,24 @@ export default {
         if (synopList.length) {
           try { const { attachSynopKind }=await import('./sources/zhms-synop/mergeWithAws'); stations = r.observations.map((o: any) => { const m = attachSynopKind(o, synopList); return { ...o, synopText: m.synopText ?? null, synopSymbolIndex: m.synopSymbolIndex ?? null, synopStatus: m.synopStatus, synopSat: m.synopSat ?? null }; }); } catch {}
         }
+        try {
+          if (env.DB) {
+            const { loadLatestParams } = await import('./lib/timeseriesDb');
+            const latest = await loadLatestParams(env.DB as any, ['H', 'P', 'GR']);
+            stations = stations.map((o: any) => {
+              const m = latest.get(o.stationId) ?? {};
+              return {
+                ...o,
+                humidityPct: (m as any).H?.value ?? null,
+                humidityTs: (m as any).H?.ts ?? null,
+                pressureHpa: (m as any).P?.value ?? null,
+                pressureTs: (m as any).P?.ts ?? null,
+                insolationWm2: (m as any).GR?.value ?? null,
+                insolationTs: (m as any).GR?.ts ?? null,
+              };
+            });
+          }
+        } catch {}
         return Response.json({ status: 'ok', fromCache: r.fromCache, fetchedAt: r.fetchedAt, error: r.error ?? null, count: stations.length, stations });
       }
       if (url.pathname.startsWith('/api/stations/')) {
