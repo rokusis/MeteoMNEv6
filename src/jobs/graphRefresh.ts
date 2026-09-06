@@ -2,11 +2,18 @@ import { isDue, nextStateOnResult, parseSnapshotMs, type GraphState } from '../s
 import { fetchGraph } from '../sources/zhms-aws/fetchGraph';
 import { parseDataAll } from '../sources/zhms-aws/parseGraph';
 import { saveTimeseries } from '../lib/timeseriesDb';
+import { saveSourceStatus } from '../db';
 
 // Gomila u :00 je 37 stanica odjednom (27 satnih + 9 brzih + Kotor).
 // 20 po krugu = 40 subrequesta + 1 bulk, ispod limita 50 po izvrsenju.
 // Validirano simulacijom sa pravim snimcima: max lag ~3 min za sve grupe.
 export const GRAPH_REFRESH_LIMIT = 20;
+// Vremenski budzet kruga: stanemo na vreme, ostatak ide sledeci minut.
+// Bez ovoga prvo punjenje (cela istorija odjednom) ubije krug timeout-om.
+const TICK_BUDGET_MS = 20000;
+// Kap istorije po parametru: pokriva najveci raspon UI-ja, sece ponavljanje
+// cele istorije pri prvom punjenju.
+const MAX_POINTS_PER_PARAM = 500;
 
 export interface Snapshot {
   stationId: string;
@@ -87,40 +94,54 @@ async function saveState(db: D1Database, s: GraphState): Promise<void> {
 }
 
 export async function refreshDueGraphs(db: D1Database, nowMs: number = Date.now(), limit: number = GRAPH_REFRESH_LIMIT): Promise<{ checked: number; updated: number; dueIds: string[] }> {
+  const t0 = Date.now();
   const snapshots = await loadSnapshots(db);
   const states = await loadStates(db);
   const due = selectDueStations(snapshots, states, nowMs, limit);
   let updated = 0;
-  for (const d of due) {
-    try {
-      const [g1, g3] = await Promise.all([fetchGraph('G1', d.stationId), fetchGraph('G3', d.stationId)]);
-      const p1 = parseDataAll(g1);
-      const p3 = parseDataAll(g3);
-      const hPts = (p1 as any).H ?? [];
-      const pPts = (p3 as any).P ?? [];
-      const grPts = (p3 as any).GR ?? [];
-      let prevMax: number | null = null;
+  let processed = 0;
+  try {
+    for (const d of due) {
+      if (Date.now() - t0 > TICK_BUDGET_MS) break; // dosta za ovaj krug, ostatak sledeci minut
       try {
-        const r = await db.prepare(`SELECT MAX(ts) as m FROM station_timeseries WHERE station_id=? AND param IN ('H','P','GR')`).bind(d.stationId).first() as any;
-        prevMax = r?.m ?? null;
-      } catch {}
-      const latestNew = Math.max(0, ...hPts.map((p: any) => p.ts), ...pPts.map((p: any) => p.ts), ...grPts.map((p: any) => p.ts));
-      const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === d.stationId)?.measuredAtRaw ?? null);
-      // pokriveno = podaci stigli do snimka (uz toleranciju); delmicni podaci se sacuvaju ali se snimak ne zatvara
-      const changed = snapMs != null && latestNew >= snapMs - 5 * 60000;
-      // upisuj samo nove tacke: manje upisa, nema timeout-a kruga
-      const onlyNew = (pts: any[]) => (prevMax == null ? pts : pts.filter((p: any) => p.ts > (prevMax as number)));
-      if (hPts.length) await saveTimeseries(db, d.stationId, 'H', onlyNew(hPts));
-      if (pPts.length) await saveTimeseries(db, d.stationId, 'P', onlyNew(pPts));
-      if (grPts.length) await saveTimeseries(db, d.stationId, 'GR', onlyNew(grPts));
-      const nx = nextStateOnResult(d, nowMs, changed, snapMs ?? d.lastSnapshotMs);
-      await saveState(db, nx);
-      if (changed) updated++;
-    } catch {
-      const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === d.stationId)?.measuredAtRaw ?? null);
-      const nx = nextStateOnResult(d, nowMs, false, snapMs ?? d.lastSnapshotMs);
-      await saveState(db, nx);
+        const [g1, g3] = await Promise.all([fetchGraph('G1', d.stationId), fetchGraph('G3', d.stationId)]);
+        const p1 = parseDataAll(g1);
+        const p3 = parseDataAll(g3);
+        const hPts = (p1 as any).H ?? [];
+        const pPts = (p3 as any).P ?? [];
+        const grPts = (p3 as any).GR ?? [];
+        let prevMax: number | null = null;
+        try {
+          const r = await db.prepare(`SELECT MAX(ts) as m FROM station_timeseries WHERE station_id=? AND param IN ('H','P','GR')`).bind(d.stationId).first() as any;
+          prevMax = r?.m ?? null;
+        } catch {}
+        const latestNew = Math.max(0, ...hPts.map((p: any) => p.ts), ...pPts.map((p: any) => p.ts), ...grPts.map((p: any) => p.ts));
+        const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === d.stationId)?.measuredAtRaw ?? null);
+        // pokriveno = podaci stigli do snimka (uz toleranciju); delmicni podaci se sacuvaju ali se snimak ne zatvara
+        const changed = snapMs != null && latestNew >= snapMs - 5 * 60000;
+        // upisuj samo nove tacke (max 500 najsvezijih): prvo punjenje ne sme da ubije krug
+        const onlyNew = (pts: any[]) => {
+          const cut = pts.length > MAX_POINTS_PER_PARAM ? pts.slice(-MAX_POINTS_PER_PARAM) : pts;
+          return prevMax == null ? cut : cut.filter((p: any) => p.ts > (prevMax as number));
+        };
+        if (hPts.length) await saveTimeseries(db, d.stationId, 'H', onlyNew(hPts));
+        if (pPts.length) await saveTimeseries(db, d.stationId, 'P', onlyNew(pPts));
+        if (grPts.length) await saveTimeseries(db, d.stationId, 'GR', onlyNew(grPts));
+        const nx = nextStateOnResult(d, nowMs, changed, snapMs ?? d.lastSnapshotMs);
+        await saveState(db, nx);
+        if (changed) updated++;
+      } catch {
+        const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === d.stationId)?.measuredAtRaw ?? null);
+        const nx = nextStateOnResult(d, nowMs, false, snapMs ?? d.lastSnapshotMs);
+        await saveState(db, nx);
+      }
+      processed++;
     }
+  } finally {
+    // heartbeat: svaki krug ostavi trag kad je radio i koliko je pokrio
+    try {
+      await saveSourceStatus(db, 'graph', updated, null);
+    } catch {}
   }
-  return { checked: due.length, updated, dueIds: due.map((d) => d.stationId) };
+  return { checked: processed, updated, dueIds: due.slice(0, processed).map((d) => d.stationId) };
 }
