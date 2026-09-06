@@ -35,7 +35,13 @@ export function selectDueStations(
   });
   const due = candidates.filter((c) => isDue(c, nowMs));
   const overdue = (c: GraphState) => (c.lastSnapshotMs == null ? Number.MAX_SAFE_INTEGER : nowMs - (c.lastSnapshotMs + windowStartMin(groupFor(c.stationId)) * 60000));
-  due.sort((a, b) => overdue(b) - overdue(a));
+  const isFresh = (c: GraphState) => {
+    const saved = states.get(c.stationId);
+    if (!saved || saved.lastCheckMs == null) return true;
+    const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === c.stationId)?.measuredAtRaw ?? null);
+    return snapMs != null && saved.lastSnapshotMs != null && snapMs !== saved.lastSnapshotMs;
+  };
+  due.sort((a, b) => Number(isFresh(b)) - Number(isFresh(a)) || overdue(b) - overdue(a));
   return due.slice(0, limit);
 }
 

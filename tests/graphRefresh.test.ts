@@ -25,6 +25,16 @@ describe('graphRefresh izbor', () => {
     expect(due.map((d) => d.stationId)).toContain('02PDGR10');
     expect(due.map((d) => d.stationId)).not.toContain('02DANL20');
   });
+  it('sveza ide pre ponavljanja i kad je ponavljanje zakasnjenije', () => {
+    const oldSnap = Date.UTC(2026, 8, 5, 10, 0);
+    const newSnap = Date.UTC(2026, 8, 5, 12, 0);
+    const now = newSnap + 61 * 60000;
+    const states = new Map([
+      ['02DANL20', { stationId: '02DANL20', lastSnapshotMs: oldSnap, lastCheckMs: now - 3 * 60000, lastChangeMs: null, miss: 1 }],
+    ]);
+    const due = selectDueStations([snap('02DANL20', oldSnap), snap('02PDGR10', newSnap)] as any, states as any, now, 1);
+    expect(due.map((d) => d.stationId)).toEqual(['02PDGR10']);
+  });
   it('promena snimka resetuje prozor', () => {
     const last = Date.UTC(2026, 8, 5, 12, 0);
     const now = last + 5 * MIN;
