@@ -1,9 +1,9 @@
-import { isDue, nextStateOnResult, parseSnapshotMs, type GraphState } from '../sources/zhms-aws/graphSchedule';
+import { groupFor, isDue, nextStateOnResult, parseSnapshotMs, windowStartMin, type GraphState } from '../sources/zhms-aws/graphSchedule';
 import { fetchGraph } from '../sources/zhms-aws/fetchGraph';
 import { parseDataAll } from '../sources/zhms-aws/parseGraph';
 import { saveTimeseries } from '../lib/timeseriesDb';
 
-export const GRAPH_REFRESH_LIMIT = 8;
+export const GRAPH_REFRESH_LIMIT = 2;
 
 export interface Snapshot {
   stationId: string;
@@ -34,7 +34,8 @@ export function selectDueStations(
     };
   });
   const due = candidates.filter((c) => isDue(c, nowMs));
-  due.sort((a, b) => (a.lastCheckMs ?? 0) - (b.lastCheckMs ?? 0));
+  const overdue = (c: GraphState) => (c.lastSnapshotMs == null ? Number.MAX_SAFE_INTEGER : nowMs - (c.lastSnapshotMs + windowStartMin(groupFor(c.stationId)) * 60000));
+  due.sort((a, b) => overdue(b) - overdue(a));
   return due.slice(0, limit);
 }
 
@@ -77,8 +78,7 @@ export async function refreshDueGraphs(db: D1Database, nowMs: number = Date.now(
   let updated = 0;
   for (const d of due) {
     try {
-      const g1 = await fetchGraph('G1', d.stationId);
-      const g3 = await fetchGraph('G3', d.stationId);
+      const [g1, g3] = await Promise.all([fetchGraph('G1', d.stationId), fetchGraph('G3', d.stationId)]);
       const p1 = parseDataAll(g1);
       const p3 = parseDataAll(g3);
       const hPts = (p1 as any).H ?? [];
