@@ -243,6 +243,50 @@ export default {
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
+      if (url.pathname === '/api/graph-debug') {
+        try {
+          const sid = url.searchParams.get('stationId');
+          let sourceStatus: any[] = [];
+          try {
+            if (env.DB) {
+              const r = await env.DB.prepare(`SELECT source, last_success_at, last_fetched_at, last_error, last_count FROM source_status`).all();
+              sourceStatus = (r as any).results ?? [];
+            }
+          } catch {}
+          let graphStateCount = 0;
+          let topMiss: any[] = [];
+          try {
+            if (env.DB) {
+              const c = await env.DB.prepare(`SELECT COUNT(*) as c FROM graph_state`).first() as any;
+              graphStateCount = c?.c ?? 0;
+              const q = await env.DB.prepare(`SELECT station_id, miss FROM graph_state ORDER BY miss DESC LIMIT 10`).all();
+              topMiss = (q as any).results ?? [];
+            }
+          } catch {}
+          let probe: any = null;
+          if (sid && env.DB) {
+            const steps: Record<string, number> = {};
+            let mark = Date.now();
+            try {
+              const { fetchGraph } = await import('./sources/zhms-aws/fetchGraph');
+              const { parseDataAll } = await import('./sources/zhms-aws/parseGraph');
+              const g1 = await fetchGraph('G1', sid);
+              steps.fetchG1ms = Date.now() - mark; mark = Date.now();
+              const g3 = await fetchGraph('G3', sid);
+              steps.fetchG3ms = Date.now() - mark; mark = Date.now();
+              const p1 = parseDataAll(g1);
+              const p3 = parseDataAll(g3);
+              steps.parseMs = Date.now() - mark;
+              probe = { stationId: sid, steps, points: { H: ((p1 as any).H ?? []).length, P: ((p3 as any).P ?? []).length, GR: ((p3 as any).GR ?? []).length } };
+            } catch (e: any) {
+              probe = { stationId: sid, steps, error: String(e?.message ?? e) };
+            }
+          }
+          return Response.json({ status: 'ok', sourceStatus, graphStateCount, topMiss, probe });
+        } catch (e: any) {
+          return Response.json({ status: 'error', message: String(e?.message ?? e) }, { status: 500 });
+        }
+      }
       if (url.pathname === '/api/synop') {
         try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const r=await getSynop(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, error:r.error ?? null, meta:r.meta, count:r.stations.length, stations:r.stations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:503}); }
       }
