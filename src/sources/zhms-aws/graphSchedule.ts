@@ -33,6 +33,17 @@ export function maxBurst(group: StationGroup): number {
 export const CATCH_UP_MIN = 6;
 export const MAX_CATCH_UP_EXTRA = 6;
 
+function lastSunday(year: number, monthIdx: number): number {
+  const d = new Date(Date.UTC(year, monthIdx + 1, 0));
+  const day = d.getUTCDay();
+  return d.getUTCDate() - day;
+}
+function podgoricaOffsetHours(yyyy: number, mm: number, dd: number, hh: number, mi: number): number {
+  const asUtc = Date.UTC(yyyy, mm - 1, dd, hh, mi);
+  const dstStart = Date.UTC(yyyy, 2, lastSunday(yyyy, 2), 1, 0);
+  const dstEnd = Date.UTC(yyyy, 9, lastSunday(yyyy, 9), 1, 0);
+  return asUtc >= dstStart && asUtc < dstEnd ? 2 : 1;
+}
 export function parseSnapshotMs(raw: string | null | undefined): number | null {
   if (!raw) return null;
   const m = String(raw).match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
@@ -45,7 +56,7 @@ export function parseSnapshotMs(raw: string | null | undefined): number | null {
   const yyyy = Number(m[3]);
   const hh = Number(m[4]);
   const mi = Number(m[5]);
-  return Date.UTC(yyyy, mm - 1, dd, hh, mi);
+  return Date.UTC(yyyy, mm - 1, dd, hh, mi) - podgoricaOffsetHours(yyyy, mm, dd, hh, mi) * 3600000;
 }
 
 export function isDue(state: GraphState, nowMs: number): boolean {

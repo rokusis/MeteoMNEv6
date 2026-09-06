@@ -4,7 +4,7 @@ import { selectDueStations } from '../src/jobs/graphRefresh';
 const MIN = 60000;
 function snap(id: string, ms: number | null) {
   if (ms == null) return { stationId: id, measuredAtRaw: null };
-  const d = new Date(ms);
+  const d = new Date(ms + 2 * 3600000);
   const p = (n: number) => String(n).padStart(2, '0');
   return { stationId: id, measuredAtRaw: `${p(d.getUTCDate())}.${p(d.getUTCMonth() + 1)}.${d.getUTCFullYear()} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}` };
 }

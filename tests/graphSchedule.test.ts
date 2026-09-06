@@ -42,7 +42,10 @@ describe('graphSchedule ritam', () => {
     expect(isDue(st({ stationId: '02DANL20', lastSnapshotMs: last }), last + 56 * MIN)).toBe(false);
     expect(isDue(st({ stationId: '02DANL20', lastSnapshotMs: last }), last + 57 * MIN)).toBe(true);
   });
+  it('zimi oduzima 1h', () => {
+    expect(parseSnapshotMs('15.01.2026 12:00')).toBe(Date.UTC(2026, 0, 15, 11, 0));
+  });
   it('cita datum_vrijeme format', () => {
-    expect(parseSnapshotMs('05.09.2026 03:10')).toBe(Date.UTC(2026, 8, 5, 3, 10));
+    expect(parseSnapshotMs('05.09.2026 03:10')).toBe(Date.UTC(2026, 8, 5, 1, 10));
   });
 });
