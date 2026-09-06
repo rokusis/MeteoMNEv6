@@ -3,49 +3,56 @@ import { groupFor, isDue, nextStateOnResult, parseSnapshotMs, type GraphState } 
 
 const MIN = 60000;
 function st(over: Partial<GraphState> & { stationId: string }): GraphState {
-  return { lastSnapshotMs: null, lastCheckMs: null, lastChangeMs: null, miss: 0, ...over };
+  return { lastSnapshotMs: null, lastCheckMs: null, lastChangeMs: null, miss: 0, doneMs: null, ...over };
 }
 
-describe('graphSchedule ritam', () => {
+describe('graphSchedule dogadjaj', () => {
   it('grupe: brze, kotor, satne', () => {
     expect(groupFor('02PDGR10')).toBe('fast');
     expect(groupFor('02LKOT20')).toBe('kotor');
     expect(groupFor('02DANL20')).toBe('hourly');
     expect(groupFor('02BERA20')).toBe('hourly');
   });
-  it('brza ne pita pre prozora', () => {
-    const last = Date.UTC(2026, 8, 5, 12, 0);
-    expect(isDue(st({ stationId: '02PDGR10', lastSnapshotMs: last }), last + 8 * MIN)).toBe(false);
-    expect(isDue(st({ stationId: '02PDGR10', lastSnapshotMs: last }), last + 10 * MIN)).toBe(true);
+  it('pokriven snimak nije zreo dok ne stigne nov', () => {
+    const s = Date.UTC(2026, 8, 6, 10, 0);
+    const now = s + 30 * MIN;
+    const done = st({ stationId: '02PDGR10', lastSnapshotMs: s, lastCheckMs: s + 12 * MIN, doneMs: s });
+    expect(isDue(done, now)).toBe(false);
   });
-  it('burst ide na 2 min, catch-up na 6 min', () => {
-    const last = Date.UTC(2026, 8, 5, 12, 0);
-    const s1: GraphState = st({ stationId: '02PDGR10', lastSnapshotMs: last, lastCheckMs: last + 10 * MIN, miss: 1 });
-    expect(isDue(s1, last + 11 * MIN)).toBe(false);
-    expect(isDue(s1, last + 12 * MIN)).toBe(true);
-    const sCatch: GraphState = st({ stationId: '02PDGR10', lastSnapshotMs: last, lastCheckMs: last + 20 * MIN, miss: 5 });
-    expect(isDue(sCatch, last + 24 * MIN)).toBe(false);
-    expect(isDue(sCatch, last + 26 * MIN)).toBe(true);
+  it('nov snimak je zreo posle 90s, ne pre', () => {
+    const s = Date.UTC(2026, 8, 6, 10, 0);
+    expect(isDue(st({ stationId: '02PDGR10', lastSnapshotMs: s }), s + 30 * 1000)).toBe(false);
+    expect(isDue(st({ stationId: '02PDGR10', lastSnapshotMs: s }), s + 2 * MIN)).toBe(true);
   });
-  it('posle promene miss se resetuje', () => {
-    const last = Date.UTC(2026, 8, 5, 12, 0);
-    const prev = st({ stationId: '02PDGR10', lastSnapshotMs: last, lastCheckMs: last + 10 * MIN, miss: 3 });
-    const nx = nextStateOnResult(prev, last + 12 * MIN, true, last);
+  it('promasaji se razredjuju pa parkiraju', () => {
+    const s = Date.UTC(2026, 8, 6, 10, 0);
+    const base = st({ stationId: '02DANL20', lastSnapshotMs: s, lastCheckMs: s + 60 * MIN });
+    expect(isDue({ ...base, miss: 0 }, s + 62 * MIN)).toBe(true);
+    expect(isDue({ ...base, miss: 1 }, s + 61 * MIN)).toBe(false);
+    expect(isDue({ ...base, miss: 99 }, s + 500 * MIN)).toBe(false);
+  });
+  it('uspeh zatvara snimak, promasaj broji', () => {
+    const s = Date.UTC(2026, 8, 6, 10, 0);
+    const prev = st({ stationId: '02PDGR10', lastSnapshotMs: s, lastCheckMs: s, miss: 2 });
+    const ok = nextStateOnResult(prev, s + 5 * MIN, true, s);
+    expect(ok.doneMs).toBe(s);
+    expect(ok.miss).toBe(0);
+    expect(isDue(ok, s + 50 * MIN)).toBe(false);
+    const fail = nextStateOnResult(prev, s + 5 * MIN, false, s);
+    expect(fail.miss).toBe(3);
+    expect(fail.doneMs).toBe(null);
+  });
+  it('pomeren snimak daje svežu šansu i ponovo je zreo', () => {
+    const s1 = Date.UTC(2026, 8, 6, 10, 0);
+    const s2 = s1 + 15 * MIN;
+    const prev = st({ stationId: '02PDGR10', lastSnapshotMs: s1, lastCheckMs: s1 + 30 * MIN, miss: 9, doneMs: s1 });
+    const nx = nextStateOnResult(prev, s2 + 5 * MIN, false, s2);
     expect(nx.miss).toBe(0);
-    const nx2 = nextStateOnResult(prev, last + 12 * MIN, false, last);
-    expect(nx2.miss).toBe(4);
+    expect(nx.doneMs).toBe(s1);
+    expect(isDue(nx, s2 + 8 * MIN)).toBe(true);
   });
-  it('kotor prozor 13, klima 57', () => {
-    const last = Date.UTC(2026, 8, 5, 12, 0);
-    expect(isDue(st({ stationId: '02LKOT20', lastSnapshotMs: last }), last + 12 * MIN)).toBe(false);
-    expect(isDue(st({ stationId: '02LKOT20', lastSnapshotMs: last }), last + 13 * MIN)).toBe(true);
-    expect(isDue(st({ stationId: '02DANL20', lastSnapshotMs: last }), last + 56 * MIN)).toBe(false);
-    expect(isDue(st({ stationId: '02DANL20', lastSnapshotMs: last }), last + 57 * MIN)).toBe(true);
-  });
-  it('zimi oduzima 1h', () => {
-    expect(parseSnapshotMs('15.01.2026 12:00')).toBe(Date.UTC(2026, 0, 15, 11, 0));
-  });
-  it('cita datum_vrijeme format', () => {
+  it('cita lokalno vreme leti i zimi', () => {
     expect(parseSnapshotMs('05.09.2026 03:10')).toBe(Date.UTC(2026, 8, 5, 1, 10));
+    expect(parseSnapshotMs('15.01.2026 12:00')).toBe(Date.UTC(2026, 0, 15, 11, 0));
   });
 });

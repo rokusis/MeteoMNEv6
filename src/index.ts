@@ -160,7 +160,7 @@ load();
 export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     try {
-      if (event.cron === "*/2 * * * *") {
+      if (event.cron === "* * * * *") {
         const { fetchAndPersist } = await import('./sources/zhms-aws/live');
         if (env.DB) await fetchAndPersist(env.DB as any);
 

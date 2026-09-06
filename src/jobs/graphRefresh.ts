@@ -1,9 +1,12 @@
-import { groupFor, isDue, nextStateOnResult, parseSnapshotMs, windowStartMin, type GraphState } from '../sources/zhms-aws/graphSchedule';
+import { isDue, nextStateOnResult, parseSnapshotMs, type GraphState } from '../sources/zhms-aws/graphSchedule';
 import { fetchGraph } from '../sources/zhms-aws/fetchGraph';
 import { parseDataAll } from '../sources/zhms-aws/parseGraph';
 import { saveTimeseries } from '../lib/timeseriesDb';
 
-export const GRAPH_REFRESH_LIMIT = 2;
+// Gomila u :00 je 37 stanica odjednom (27 satnih + 9 brzih + Kotor).
+// 20 po krugu = 40 subrequesta + 1 bulk, ispod limita 50 po izvrsenju.
+// Validirano simulacijom sa pravim snimcima: max lag ~3 min za sve grupe.
+export const GRAPH_REFRESH_LIMIT = 20;
 
 export interface Snapshot {
   stationId: string;
@@ -21,7 +24,8 @@ export function selectDueStations(
     if (saved) {
       const snapMs = parseSnapshotMs(s.measuredAtRaw);
       if (snapMs != null && saved.lastSnapshotMs != null && snapMs !== saved.lastSnapshotMs) {
-        return { ...saved, lastSnapshotMs: snapMs };
+        // nov snimak: sveza sansa, parkira se ukida
+        return { ...saved, lastSnapshotMs: snapMs, miss: 0 };
       }
       return saved;
     }
@@ -31,16 +35,18 @@ export function selectDueStations(
       lastCheckMs: null,
       lastChangeMs: null,
       miss: 0,
+      doneMs: null,
     };
   });
   const due = candidates.filter((c) => isDue(c, nowMs));
-  const overdue = (c: GraphState) => (c.lastSnapshotMs == null ? Number.MAX_SAFE_INTEGER : nowMs - (c.lastSnapshotMs + windowStartMin(groupFor(c.stationId)) * 60000));
+  const overdue = (c: GraphState) => (c.lastSnapshotMs == null ? Number.MAX_SAFE_INTEGER : nowMs - c.lastSnapshotMs);
   const isFresh = (c: GraphState) => {
     const saved = states.get(c.stationId);
     if (!saved || saved.lastCheckMs == null) return true;
     const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === c.stationId)?.measuredAtRaw ?? null);
     return snapMs != null && saved.lastSnapshotMs != null && snapMs !== saved.lastSnapshotMs;
   };
+  // sveze (pomeren snimak) pre ponavljanja, pa najstariji nepokriveni snimak
   due.sort((a, b) => Number(isFresh(b)) - Number(isFresh(a)) || overdue(b) - overdue(a));
   return due.slice(0, limit);
 }
@@ -53,7 +59,7 @@ async function loadSnapshots(db: D1Database): Promise<Snapshot[]> {
 async function loadStates(db: D1Database): Promise<Map<string, GraphState>> {
   const m = new Map<string, GraphState>();
   try {
-    const { results } = await db.prepare(`SELECT station_id, last_snapshot_ms, last_check_ms, last_change_ms, miss FROM graph_state`).all();
+    const { results } = await db.prepare(`SELECT station_id, last_snapshot_ms, last_check_ms, last_change_ms, miss, done_ms FROM graph_state`).all();
     for (const r of results as any[]) {
       m.set(r.station_id, {
         stationId: r.station_id,
@@ -61,19 +67,22 @@ async function loadStates(db: D1Database): Promise<Map<string, GraphState>> {
         lastCheckMs: r.last_check_ms ?? null,
         lastChangeMs: r.last_change_ms ?? null,
         miss: r.miss ?? 0,
+        doneMs: r.done_ms ?? null,
       });
     }
-  } catch {}
+  } catch {
+    // tabela jos ne postoji (migracija nije primenjena): prazno stanje
+  }
   return m;
 }
 
 async function saveState(db: D1Database, s: GraphState): Promise<void> {
   try {
     await db.prepare(
-      `INSERT INTO graph_state (station_id, last_snapshot_ms, last_check_ms, last_change_ms, miss, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT(station_id) DO UPDATE SET last_snapshot_ms=excluded.last_snapshot_ms, last_check_ms=excluded.last_check_ms, last_change_ms=excluded.last_change_ms, miss=excluded.miss, updated_at=excluded.updated_at`,
-    ).bind(s.stationId, s.lastSnapshotMs, s.lastCheckMs, s.lastChangeMs, s.miss, new Date().toISOString()).run();
+      `INSERT INTO graph_state (station_id, last_snapshot_ms, last_check_ms, last_change_ms, miss, done_ms, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(station_id) DO UPDATE SET last_snapshot_ms=excluded.last_snapshot_ms, last_check_ms=excluded.last_check_ms, last_change_ms=excluded.last_change_ms, miss=excluded.miss, done_ms=excluded.done_ms, updated_at=excluded.updated_at`,
+    ).bind(s.stationId, s.lastSnapshotMs, s.lastCheckMs, s.lastChangeMs, s.miss, s.doneMs, new Date().toISOString()).run();
   } catch {}
 }
 
@@ -96,11 +105,14 @@ export async function refreshDueGraphs(db: D1Database, nowMs: number = Date.now(
         prevMax = r?.m ?? null;
       } catch {}
       const latestNew = Math.max(0, ...hPts.map((p: any) => p.ts), ...pPts.map((p: any) => p.ts), ...grPts.map((p: any) => p.ts));
-      const changed = latestNew > 0 && (prevMax == null || latestNew > prevMax);
-      if (hPts.length) await saveTimeseries(db, d.stationId, 'H', hPts);
-      if (pPts.length) await saveTimeseries(db, d.stationId, 'P', pPts);
-      if (grPts.length) await saveTimeseries(db, d.stationId, 'GR', grPts);
       const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === d.stationId)?.measuredAtRaw ?? null);
+      // pokriveno = podaci stigli do snimka (uz toleranciju); delmicni podaci se sacuvaju ali se snimak ne zatvara
+      const changed = snapMs != null && latestNew >= snapMs - 5 * 60000;
+      // upisuj samo nove tacke: manje upisa, nema timeout-a kruga
+      const onlyNew = (pts: any[]) => (prevMax == null ? pts : pts.filter((p: any) => p.ts > (prevMax as number)));
+      if (hPts.length) await saveTimeseries(db, d.stationId, 'H', onlyNew(hPts));
+      if (pPts.length) await saveTimeseries(db, d.stationId, 'P', onlyNew(pPts));
+      if (grPts.length) await saveTimeseries(db, d.stationId, 'GR', onlyNew(grPts));
       const nx = nextStateOnResult(d, nowMs, changed, snapMs ?? d.lastSnapshotMs);
       await saveState(db, nx);
       if (changed) updated++;
