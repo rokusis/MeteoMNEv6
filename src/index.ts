@@ -163,6 +163,11 @@ export default {
       if (event.cron === "*/2 * * * *") {
         const { fetchAndPersist } = await import('./sources/zhms-aws/live');
         if (env.DB) await fetchAndPersist(env.DB as any);
+
+        try {
+          const { refreshDueGraphs } = await import('./jobs/graphRefresh');
+          if (env.DB) await refreshDueGraphs(env.DB as any);
+        } catch(e){ console.error('graph refresh cron error', e); }
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
