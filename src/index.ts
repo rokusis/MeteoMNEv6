@@ -183,6 +183,14 @@ export default {
           const { logOfficialSentinel } = await import('./jobs/officialLogger');
           if (env.DB) await logOfficialSentinel(env.DB as any);
         } catch (e) { console.error('official log error', e); }
+        try {
+          const { refreshHydro } = await import('./sources/hydro/liveHydro');
+          if (env.DB) await refreshHydro(env.DB as any);
+        } catch (e) { console.error('hydro cron error', e); }
+        try {
+          const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
+          if (env.DB) await refreshSeaSnow(env.DB as any);
+        } catch (e) { console.error('sea snow cron error', e); }
       }
     } catch(e){ console.error('cron error', e); }
   },
@@ -222,13 +230,13 @@ export default {
         }catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/sea') {
-        try { const { getSeaSnow }=await import('./sources/zhms-sea-snow/liveSeaSnow'); const r=await getSeaSnow(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, count:r.sea.length, sea:r.sea }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+        try { const { getSeaSnow }=await import('./sources/zhms-sea-snow/liveSeaSnow'); const r=await getSeaSnow(env.DB as any); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, count:r.sea.length, sea:r.sea }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/snow') {
-        try { const { getSeaSnow }=await import('./sources/zhms-sea-snow/liveSeaSnow'); const r=await getSeaSnow(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, count:r.snow.length, snow:r.snow }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+        try { const { getSeaSnow }=await import('./sources/zhms-sea-snow/liveSeaSnow'); const r=await getSeaSnow(env.DB as any); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, count:r.snow.length, snow:r.snow }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/hydro') {
-        try { const { getHydro }=await import('./sources/hydro/liveHydro'); const r=await getHydro(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, countStations:r.stations.length, countObs:r.observations.length, stations:r.stations, observations:r.observations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+        try { const { getHydro }=await import('./sources/hydro/liveHydro'); const r=await getHydro(env.DB as any); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, countStations:r.stations.length, countObs:r.observations.length, stations:r.stations, observations:r.observations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/forecast/numerical') {
         const city = url.searchParams.get('city') || url.searchParams.get('station') || 'POD';
