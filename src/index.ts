@@ -179,6 +179,10 @@ export default {
           const { refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB) await refreshSynop(env.DB as any);
         } catch (e) { console.error('synop cron error', e); }
+        try {
+          const { logOfficialSentinel } = await import('./jobs/officialLogger');
+          if (env.DB) await logOfficialSentinel(env.DB as any);
+        } catch (e) { console.error('official log error', e); }
       }
     } catch(e){ console.error('cron error', e); }
   },
@@ -248,6 +252,13 @@ export default {
         try {
           if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
           const {results} = await env.DB.prepare(`SELECT city, model, last_modified, etag, checked_at, status FROM numerical_log ORDER BY checked_at DESC LIMIT 100`).all();
+          return Response.json({ status:'ok', count: results.length, logs: results });
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
+      if (url.pathname === '/api/official-log') {
+        try {
+          if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
+          const {results} = await env.DB.prepare(`SELECT checked_at, status, titles FROM official_log ORDER BY checked_at DESC LIMIT 100`).all();
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
