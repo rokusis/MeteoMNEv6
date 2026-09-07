@@ -278,3 +278,66 @@ Scope: TASK-080.1 / 080.2 / 080.3
 Commit: ee7e4f0 / 8af9053 / 17101e8
 Findings: parse sinop sifra/naziv/sat/ww/obl/VBNobl OK, no data odbijeno, kind daje Pretežno vedro + index, ww>=4 UNRESOLVED, merge ne dira AWS T/vetar, 54 testa PASS, CI success
 Result: PASS
+
+---
+## REVIEW-027 — H/P/GR dogadjaj-umesto-prozora
+Date: 2026-09-06
+Reviewer: AI Reviewer
+Scope: graph ritam -> dogadjaj, krug 1min limit 20, budzet 20s
+Commit: 9566cf1 / 8781988 / ae84ef2 / 2fcd7de / 2ed0d4c / d437702 / a3ee205 / a6804f0
+Findings: prozori ukinuti (sami garantuju lag), okidac je pomeren snimak; zona Podgorica u parsiranju; doneMs kapija; sveze pre ponavljanja; validirano simulacijom sa pravim snimcima max lag ~3 min; Podgorica H/P/GR svez dokazano uzivo; heartbeat source_status graph
+Result: PASS
+
+---
+## REVIEW-028 — lista i kartice pune
+Date: 2026-09-06
+Reviewer: AI Reviewer
+Scope: /api/stations H/P/GR + kartice vlaga/pritisak/udar/sunce
+Commit: f0169e2 / be5539a
+Findings: loadLatestParams jednim upitom; kartice kao referentna app; 74 testa PASS, CI success; stranica proverena uzivo
+Result: PASS
+
+---
+## REVIEW-029 — synop pisac + gusta straza
+Date: 2026-09-07
+Reviewer: AI Reviewer
+Scope: synop_cache, refreshSynop, prozori 06:30-08:30/13:30-15:30/20:30-22:30
+Commit: 5656e58 / d2932d1 / 7b5f151
+Findings: API cita bazu, kron pise samo nov termin; straza 8/8 provereno; /api/graph-debug dijagnostika; CI success
+Result: PASS
+
+---
+## REVIEW-030 — meraci 48h zvanicna/hidro/more
+Date: 2026-09-07
+Reviewer: AI Reviewer
+Scope: official_log, hydro_log, sea_snow_log + rute za citanje
+Commit: f79eca5 / 9f83354 / 431efe9 / 39d87f8
+Findings: otisak sadrzaja first/same/changed; svi meraci potvrdjeni uzivo; citanje obrasca nakon 48h; CI success
+Result: PASS
+
+---
+## REVIEW-031 — hidro i more/sneg pisci
+Date: 2026-09-07
+Reviewer: AI Reviewer
+Scope: hydro_cache, sea_snow_cache, API cita bazu
+Commit: 91900fc
+Findings: prvi poziv uzivo 42 reke, drugi iz baze; more 3 mesta; CI success
+Result: PASS
+
+---
+## REVIEW-032 — numericka prozori i ture
+Date: 2026-09-07
+Reviewer: AI Reviewer
+Scope: numericalWatch, numerical_refresh kursor, ukinut full-pull od 125
+Commit: 0df3180
+Findings: e3km 09:00-10:30, a3km 06:00-13:00 iz merenja 4 dana; ture po 3 grada sa nastavkom; dokaz sutra posle 10h; CI success
+Result: PASS (uzivo dokaz sutra)
+
+---
+## REVIEW-033 — ivicni kes 60s
+Date: 2026-09-07
+Reviewer: AI Reviewer
+Scope: edgeCache za /api rute, dijagnostika van kesa
+Commit: 9760f3d / 1f19ea1
+Findings: cache-control public max-age 60 dokazan uzivo; API 0.21s -> 0.067s; CI success nakon this-skop popravke
+Result: PASS
