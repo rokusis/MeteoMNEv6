@@ -79,3 +79,11 @@ export function nextStateOnResult(prev: GraphState, nowMs: number, changed: bool
   }
   return { stationId: prev.stationId, lastSnapshotMs: newSnapshotMs ?? prev.lastSnapshotMs, lastCheckMs: nowMs, lastChangeMs: prev.lastChangeMs, miss: prev.miss + 1, doneMs: prev.doneMs };
 }
+
+// Lokalno vreme Podgorice (zimsko +1, letnje +2) za prozore straze.
+export function podgoricaLocal(nowMs: number): { hour: number; minute: number } {
+  const guess = new Date(nowMs + 2 * 3600000);
+  const off = podgoricaOffsetHours(guess.getUTCFullYear(), guess.getUTCMonth() + 1, guess.getUTCDate(), guess.getUTCHours(), guess.getUTCMinutes());
+  const l = new Date(nowMs + off * 3600000);
+  return { hour: l.getUTCHours(), minute: l.getUTCMinutes() };
+}

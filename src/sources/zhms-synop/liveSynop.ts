@@ -1,4 +1,5 @@
 import { zhmsFetch } from '../../lib/http';
+import { podgoricaLocal } from '../zhms-aws/graphSchedule';
 import { parseSynop } from './parseSynop';
 import { synopKind } from './weatherKind';
 import { fullWeatherText } from './weatherFull';
@@ -90,3 +91,12 @@ export async function getSynop(db?: D1Database | null): Promise<{ meta: any; sta
 
 export function getSynopCache() { return cache; }
 export function getSynopLastError() { return lastError; }
+
+// Gusta straza samo oko sinoptickih termina 07/14/21 (lokalno):
+// promena tipa "sunce u kisu u 14:01" lovi se za 2-3 min, van prozora
+// redovna 10-minutna provera je mreza.
+export function synopWatchOpen(nowMs: number = Date.now()): boolean {
+  const { hour, minute } = podgoricaLocal(nowMs);
+  const m = hour * 60 + minute;
+  return (m >= 390 && m < 510) || (m >= 810 && m < 930) || (m >= 1230 && m < 1350);
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getSynop, refreshSynop } from '../src/sources/zhms-synop/liveSynop';
+import { getSynop, refreshSynop, synopWatchOpen } from '../src/sources/zhms-synop/liveSynop';
 
 const SAMPLE = `var sinopCGHour=12; var sinopCGDay="2026/09/04"; var sinop=[{ sifra: '13463', naziv: 'Podgorica', sat: '12', obl: '2', VBNobl: '6' }];`;
 
@@ -38,5 +38,20 @@ describe('synop baza', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(SAMPLE, { status: 200 }) as any);
     expect((await refreshSynop(db)).updated).toBe(true);
     expect((await refreshSynop(db)).updated).toBe(false);
+  });
+});
+
+describe('synop straza', () => {
+  it('otvorena oko termina, zatvorena inace', () => {
+    expect(synopWatchOpen(Date.UTC(2026, 8, 6, 4, 29))).toBe(false);
+    expect(synopWatchOpen(Date.UTC(2026, 8, 6, 4, 30))).toBe(true);
+    expect(synopWatchOpen(Date.UTC(2026, 8, 6, 6, 29))).toBe(true);
+    expect(synopWatchOpen(Date.UTC(2026, 8, 6, 6, 30))).toBe(false);
+    expect(synopWatchOpen(Date.UTC(2026, 8, 6, 12, 1))).toBe(true);
+    expect(synopWatchOpen(Date.UTC(2026, 8, 6, 1, 0))).toBe(false);
+  });
+  it('zimi racuna +1', () => {
+    expect(synopWatchOpen(Date.UTC(2026, 0, 15, 5, 29))).toBe(false);
+    expect(synopWatchOpen(Date.UTC(2026, 0, 15, 5, 30))).toBe(true);
   });
 });

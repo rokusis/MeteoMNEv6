@@ -168,6 +168,10 @@ export default {
           const { refreshDueGraphs } = await import('./jobs/graphRefresh');
           if (env.DB) await refreshDueGraphs(env.DB as any);
         } catch(e){ console.error('graph refresh cron error', e); }
+        try {
+          const { synopWatchOpen, refreshSynop } = await import('./sources/zhms-synop/liveSynop');
+          if (env.DB && synopWatchOpen(Date.now())) await refreshSynop(env.DB as any);
+        } catch(e){ console.error('synop watch error', e); }
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
