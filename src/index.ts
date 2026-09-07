@@ -206,7 +206,15 @@ export default {
       }
     } catch(e){ console.error('cron error', e); }
   },
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname === '/' || url.pathname === '/index.html') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    // Dijagnostika uvek ziva; ostale API rute iz ivicnog kesa 60s.
+    if (!url.pathname.startsWith('/api/') || url.pathname === '/api/graph-debug') return handleApi(request, env);
+    const { cachedApi } = await import('./lib/edgeCache');
+    return cachedApi(request, ctx ?? null, () => handleApi(request, env), 60);
+  },
+  async handleApi(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === '/' || url.pathname === '/index.html') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     try {
