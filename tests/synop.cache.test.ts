@@ -35,7 +35,7 @@ describe('synop baza', () => {
   });
   it('isti termin ne prepisuje bazu', async () => {
     const db = fakeDb();
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(SAMPLE, { status: 200 }) as any);
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(SAMPLE, { status: 200 }) as any);
     expect((await refreshSynop(db)).updated).toBe(true);
     expect((await refreshSynop(db)).updated).toBe(false);
   });
