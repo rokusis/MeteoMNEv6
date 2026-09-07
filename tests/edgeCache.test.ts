@@ -14,7 +14,7 @@ describe('edge kes', () => {
     const mem = new Map<string, Response>();
     (globalThis as any).caches = {
       default: {
-        match: async (req: Request) => mem.get(req.url) ?? undefined,
+        match: async (req: Request) => mem.get(req.url)?.clone() ?? undefined,
         put: async (req: Request, res: Response) => {
           mem.set(req.url, res);
         },

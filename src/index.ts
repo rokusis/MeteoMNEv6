@@ -210,9 +210,9 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/' || url.pathname === '/index.html') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     // Dijagnostika uvek ziva; ostale API rute iz ivicnog kesa 60s.
-    if (!url.pathname.startsWith('/api/') || url.pathname === '/api/graph-debug') return handleApi(request, env);
+    if (!url.pathname.startsWith('/api/') || url.pathname === '/api/graph-debug') return (this as any).handleApi(request, env);
     const { cachedApi } = await import('./lib/edgeCache');
-    return cachedApi(request, ctx ?? null, () => handleApi(request, env), 60);
+    return cachedApi(request, ctx ?? null, () => (this as any).handleApi(request, env), 60);
   },
   async handleApi(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
