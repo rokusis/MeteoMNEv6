@@ -20,7 +20,7 @@ function fakeDb() {
         first: async () => (sql.includes('SELECT fingerprint') && rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null),
         all: async () => ({ results: rows }),
       }),
-      first: async () => null,
+      first: async () => (rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null),
       all: async () => ({ results: rows }),
     }),
   } as any;
