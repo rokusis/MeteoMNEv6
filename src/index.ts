@@ -171,6 +171,10 @@ export default {
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
+        try {
+          const { refreshSynop } = await import('./sources/zhms-synop/liveSynop');
+          if (env.DB) await refreshSynop(env.DB as any);
+        } catch (e) { console.error('synop cron error', e); }
       }
     } catch(e){ console.error('cron error', e); }
   },
@@ -288,12 +292,12 @@ export default {
         }
       }
       if (url.pathname === '/api/synop') {
-        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const r=await getSynop(); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, error:r.error ?? null, meta:r.meta, count:r.stations.length, stations:r.stations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:503}); }
+        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const r=await getSynop(env.DB as any); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, error:r.error ?? null, meta:r.meta, count:r.stations.length, stations:r.stations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:503}); }
       }
       if (url.pathname === '/api/stations') {
         const r = await getObservations(env.DB as any);
         let synopList: any[] = [];
-        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const s=await getSynop(); synopList=s.stations; } catch {}
+        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const s=await getSynop(env.DB as any); synopList=s.stations; } catch {}
         let stations = r.observations;
         if (synopList.length) {
           try { const { attachSynopKind }=await import('./sources/zhms-synop/mergeWithAws'); stations = r.observations.map((o: any) => { const m = attachSynopKind(o, synopList); return { ...o, synopText: m.synopText ?? null, synopSymbolIndex: m.synopSymbolIndex ?? null, synopStatus: m.synopStatus, synopSat: m.synopSat ?? null }; }); } catch {}
@@ -325,7 +329,7 @@ export default {
         const one = r.observations.find((o: any) => o.stationId === id);
         if (!one) return Response.json({ status: 'error', message: 'not found' }, { status: 404 });
         let station: any = { ...one };
-        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const s=await getSynop(); const { attachSynopKind }=await import('./sources/zhms-synop/mergeWithAws'); const m=attachSynopKind(one, s.stations); station = { ...station, synopText: m.synopText ?? null, synopSymbolIndex: m.synopSymbolIndex ?? null, synopStatus: m.synopStatus, synopSat: m.synopSat ?? null }; } catch {}
+        try { const { getSynop }=await import('./sources/zhms-synop/liveSynop'); const s=await getSynop(env.DB as any); const { attachSynopKind }=await import('./sources/zhms-synop/mergeWithAws'); const m=attachSynopKind(one, s.stations); station = { ...station, synopText: m.synopText ?? null, synopSymbolIndex: m.synopSymbolIndex ?? null, synopStatus: m.synopStatus, synopSat: m.synopSat ?? null }; } catch {}
         try {
           if (env.DB) {
             const { loadTimeseries }=await import('./lib/timeseriesDb');

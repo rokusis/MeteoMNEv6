@@ -25,13 +25,65 @@ export async function fetchSynopLive(): Promise<{ meta: any; stations: any[] }> 
   return { meta: parsed.meta, stations };
 }
 
-export async function getSynop(): Promise<{ meta: any; stations: any[]; fromCache: boolean; fetchedAt?: string; error?: string }> {
+export async function saveSynop(db: D1Database, meta: any, stations: any[]): Promise<void> {
+  if (!stations.length) return;
+  await db.prepare(
+    `INSERT INTO synop_cache (id, meta_hour, meta_day, fetched_at, payload)
+     VALUES (1, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET meta_hour=excluded.meta_hour, meta_day=excluded.meta_day, fetched_at=excluded.fetched_at, payload=excluded.payload`,
+  ).bind(meta?.hour ?? null, meta?.day ?? null, new Date().toISOString(), JSON.stringify(stations)).run();
+}
+
+export async function loadSynop(db: D1Database): Promise<{ meta: any; stations: any[]; fetchedAt: string } | null> {
+  const row = await db.prepare(`SELECT meta_hour, meta_day, fetched_at, payload FROM synop_cache WHERE id=1`).first() as any;
+  if (!row?.payload) return null;
+  try {
+    const stations = JSON.parse(row.payload);
+    if (!Array.isArray(stations) || !stations.length) return null;
+    return { meta: { hour: row.meta_hour, day: row.meta_day }, stations, fetchedAt: row.fetched_at };
+  } catch {
+    return null;
+  }
+}
+
+// Za kron: upise samo kad stigne nov termin (07/14/21), inace nista ne dira.
+export async function refreshSynop(db: D1Database): Promise<{ updated: boolean }> {
+  const r = await fetchSynopLive();
+  let prev: { meta: any } | null = null;
+  try {
+    prev = await loadSynop(db);
+  } catch {}
+  if (prev && prev.meta?.hour === r.meta?.hour && prev.meta?.day === r.meta?.day) {
+    return { updated: false };
+  }
+  await saveSynop(db, r.meta, r.stations);
+  return { updated: true };
+}
+
+export async function getSynop(db?: D1Database | null): Promise<{ meta: any; stations: any[]; fromCache: boolean; fetchedAt?: string; error?: string }> {
+  if (db) {
+    try {
+      const c = await loadSynop(db);
+      if (c) return { ...c, fromCache: true };
+    } catch {}
+  }
   try {
     const r = await fetchSynopLive();
+    if (db) {
+      try {
+        await saveSynop(db, r.meta, r.stations);
+      } catch {}
+    }
     return { ...r, fromCache: false, fetchedAt: cache!.fetchedAt };
   } catch (e: any) {
     lastError = String(e?.message ?? e);
     if (cache) return { ...cache, fromCache: true, error: lastError };
+    if (db) {
+      try {
+        const c = await loadSynop(db);
+        if (c) return { ...c, fromCache: true, error: lastError };
+      } catch {}
+    }
     throw e;
   }
 }
