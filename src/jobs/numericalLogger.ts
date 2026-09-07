@@ -1,4 +1,3 @@
-import { runNumericalFull } from './numericalCron';
 export async function logNumericalSentinel(db: D1Database): Promise<void> {
   const now = new Date().toISOString();
   for (const model of ["e3km","a3km"] as const) {
@@ -20,10 +19,9 @@ export async function logNumericalSentinel(db: D1Database): Promise<void> {
       const etag = res.headers.get("etag") || res.headers.get("ETag") || null;
       const status = String(res.status);
       await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, lm, etag, now, status).run();
-      if (res.status===200) {
-        // novi batch - povuci sve
-        await runNumericalFull(db, model);
-      }
+      // Puno povlacenje od 125 fajlova je prebaceno na ture sa kursorom
+      // (jobs/numericalWatch) jer je ovde pucalo na limitu subrequesta.
+      // Merac ostaje, samo vise ne vuce.
     } catch (e:any) {
       await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, null, null, now, "error:"+String(e?.message??e).slice(0,120)).run();
     }

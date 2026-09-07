@@ -172,6 +172,10 @@ export default {
           const { synopWatchOpen, refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB && synopWatchOpen(Date.now())) await refreshSynop(env.DB as any);
         } catch(e){ console.error('synop watch error', e); }
+        try {
+          const { runNumericalTick } = await import('./jobs/numericalWatch');
+          if (env.DB) await runNumericalTick(env.DB as any, Date.now());
+        } catch(e){ console.error('numerical tick error', e); }
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
