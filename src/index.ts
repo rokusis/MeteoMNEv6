@@ -191,6 +191,10 @@ export default {
           const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
           if (env.DB) await refreshSeaSnow(env.DB as any);
         } catch (e) { console.error('sea snow cron error', e); }
+        try {
+          const { logHydroSentinel } = await import('./jobs/hydroLogger');
+          if (env.DB) await logHydroSentinel(env.DB as any);
+        } catch (e) { console.error('hydro log error', e); }
       }
     } catch(e){ console.error('cron error', e); }
   },
@@ -267,6 +271,13 @@ export default {
         try {
           if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
           const {results} = await env.DB.prepare(`SELECT checked_at, status, titles FROM official_log ORDER BY checked_at DESC LIMIT 100`).all();
+          return Response.json({ status:'ok', count: results.length, logs: results });
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
+      if (url.pathname === '/api/hydro-log') {
+        try {
+          if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
+          const {results} = await env.DB.prepare(`SELECT checked_at, status, station_count FROM hydro_log ORDER BY checked_at DESC LIMIT 100`).all();
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
