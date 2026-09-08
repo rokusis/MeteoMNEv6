@@ -304,6 +304,13 @@ export default {
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
+      if (url.pathname === '/api/numerical-status') {
+        try {
+          if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
+          const {results} = await env.DB.prepare(`SELECT model, last_modified, cursor_idx, status, updated_at FROM numerical_refresh`).all();
+          return Response.json({ status:'ok', refresh: results });
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
       if (url.pathname === '/api/graph-debug') {
         try {
           const sid = url.searchParams.get('stationId');
