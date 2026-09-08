@@ -3,6 +3,7 @@ import {
   numericalWatchModels,
   checkModelSentinel,
   runNumericalBatch,
+  runNumericalTick,
   fetchCityModel,
 } from '../src/jobs/numericalWatch';
 
@@ -94,5 +95,12 @@ describe('numerical straza', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE, { status: 200 }) as any);
     await fetchCityModel(db, 'e3km', 'POD');
     expect(db.dayRows.filter((d: any) => d.city === 'POD').length).toBe(5);
+  });
+  it('prazna tabela se sama pokrene', async () => {
+    const db = fakeDb();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE, { status: 200 }) as any);
+    await runNumericalTick(db, Date.UTC(2026, 8, 6, 1, 0));
+    expect(db.refresh['e3km'].status).toBe('pending');
+    expect(db.dayRows.length).toBeGreaterThanOrEqual(15);
   });
 });

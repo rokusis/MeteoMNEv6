@@ -137,6 +137,19 @@ export async function runNumericalBatch(db: D1Database, model: NumModel, maxCiti
 
 // Glavni ulaz za kron: straza u prozorima + nastavak zapocetog.
 export async function runNumericalTick(db: D1Database, nowMs: number = Date.now()): Promise<void> {
+  // Samo-pokretanje: prazna tabela znaci da nikad nismo vukli (npr. prvi
+  // deploy usred dana) - upisi pending pa ture same nadoknade.
+  for (const model of ['e3km', 'a3km'] as const) {
+    try {
+      const row = (await db.prepare(`SELECT model FROM numerical_refresh WHERE model=?`).bind(model).first()) as any;
+      if (!row) {
+        await db
+          .prepare(`INSERT INTO numerical_refresh (model, last_modified, cursor_idx, status, updated_at) VALUES (?, ?, ?, ?, ?)`)
+          .bind(model, null, 0, 'pending', new Date().toISOString())
+          .run();
+      }
+    } catch {}
+  }
   const batched = new Set<NumModel>();
   for (const model of numericalWatchModels(nowMs)) {
     try {
