@@ -1,13 +1,13 @@
 import { isDue, nextStateOnResult, parseSnapshotMs, type GraphState } from '../sources/zhms-aws/graphSchedule';
 import { fetchGraph } from '../sources/zhms-aws/fetchGraph';
 import { parseDataAll } from '../sources/zhms-aws/parseGraph';
-import { saveTimeseries } from '../lib/timeseriesDb';
+import { saveTimeseriesBatch } from '../lib/timeseriesDb';
 import { saveSourceStatus } from '../db';
 
 // Gomila u :00 je 37 stanica odjednom (27 satnih + 9 brzih + Kotor).
-// 20 po krugu = 40 subrequesta + 1 bulk, ispod limita 50 po izvrsenju.
-// Validirano simulacijom sa pravim snimcima: max lag ~3 min za sve grupe.
-export const GRAPH_REFRESH_LIMIT = 20;
+// 10 po krugu zbog CPU limita (mejl 1000+ prekrsaja); rep je ~5 min.
+// Validirano simulacijom: nema gladovanja, nula promasaja.
+export const GRAPH_REFRESH_LIMIT = 10;
 // Vremenski budzet kruga: stanemo na vreme, ostatak ide sledeci minut.
 // Bez ovoga prvo punjenje (cela istorija odjednom) ubije krug timeout-om.
 const TICK_BUDGET_MS = 20000;
@@ -124,9 +124,9 @@ export async function refreshDueGraphs(db: D1Database, nowMs: number = Date.now(
           const cut = pts.length > MAX_POINTS_PER_PARAM ? pts.slice(-MAX_POINTS_PER_PARAM) : pts;
           return prevMax == null ? cut : cut.filter((p: any) => p.ts > (prevMax as number));
         };
-        if (hPts.length) await saveTimeseries(db, d.stationId, 'H', onlyNew(hPts));
-        if (pPts.length) await saveTimeseries(db, d.stationId, 'P', onlyNew(pPts));
-        if (grPts.length) await saveTimeseries(db, d.stationId, 'GR', onlyNew(grPts));
+      if (hPts.length) await saveTimeseriesBatch(db, d.stationId, 'H', onlyNew(hPts));
+      if (pPts.length) await saveTimeseriesBatch(db, d.stationId, 'P', onlyNew(pPts));
+      if (grPts.length) await saveTimeseriesBatch(db, d.stationId, 'GR', onlyNew(grPts));
         const nx = nextStateOnResult(d, nowMs, changed, snapMs ?? d.lastSnapshotMs);
         await saveState(db, nx);
         if (changed) updated++;

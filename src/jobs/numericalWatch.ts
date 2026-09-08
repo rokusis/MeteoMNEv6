@@ -85,12 +85,24 @@ export async function fetchCityModel(db: D1Database, model: NumModel, city: stri
         .bind(city, model, day)
         .first()) as any)?.id;
     if (!dayId) continue;
-    await db.prepare(`DELETE FROM numerical_hours WHERE day_id=?`).bind(dayId).run();
-    for (const h of p.hours) {
-      await db
-        .prepare(`INSERT INTO numerical_hours (day_id, utc_hour, symbol, rr_mm, rh_pct, wind_code) VALUES (?, ?, ?, ?, ?, ?)`)
-        .bind(dayId, h.utcHour, h.symbol || null, h.rrMm ?? null, h.rhPct ?? null, h.windCode || null)
-        .run();
+    const hourStmts = [
+      db.prepare(`DELETE FROM numerical_hours WHERE day_id=?`).bind(dayId),
+      ...p.hours.map((h) =>
+        db
+          .prepare(`INSERT INTO numerical_hours (day_id, utc_hour, symbol, rr_mm, rh_pct, wind_code) VALUES (?, ?, ?, ?, ?, ?)`)
+          .bind(dayId, h.utcHour, h.symbol || null, h.rrMm ?? null, h.rhPct ?? null, h.windCode || null),
+      ),
+    ];
+    try {
+      await db.batch(hourStmts);
+    } catch {
+      await db.prepare(`DELETE FROM numerical_hours WHERE day_id=?`).bind(dayId).run();
+      for (const h of p.hours) {
+        await db
+          .prepare(`INSERT INTO numerical_hours (day_id, utc_hour, symbol, rr_mm, rh_pct, wind_code) VALUES (?, ?, ?, ?, ?, ?)`)
+          .bind(dayId, h.utcHour, h.symbol || null, h.rrMm ?? null, h.rhPct ?? null, h.windCode || null)
+          .run();
+      }
     }
     await new Promise((r2) => setTimeout(r2, 80));
   }

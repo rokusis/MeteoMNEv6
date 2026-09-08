@@ -4,6 +4,23 @@ export async function saveTimeseries(db: D1Database, stationId: string, param: s
     await db.prepare(`INSERT INTO station_timeseries (station_id, ts, param, value) VALUES (?, ?, ?, ?) ON CONFLICT(station_id, ts, param) DO UPDATE SET value=excluded.value`).bind(stationId, p.ts, param, p.value).run();
   }
 }
+
+// Grupni upis: stotine poziva stanemo u par serija umesto stotine krugova.
+// Jedna serija = jedan odlazak do baze. Na gresku pada nazad na obican upis.
+export async function saveTimeseriesBatch(db: D1Database, stationId: string, param: string, points: {ts:number,value:number|null}[], chunkSize: number = 40): Promise<void> {
+  const clean = points.filter((p) => p.value != null);
+  if (!clean.length) return;
+  const stmts = clean.map((p) =>
+    db.prepare(`INSERT INTO station_timeseries (station_id, ts, param, value) VALUES (?, ?, ?, ?) ON CONFLICT(station_id, ts, param) DO UPDATE SET value=excluded.value`).bind(stationId, p.ts, param, p.value as number),
+  );
+  try {
+    for (let i = 0; i < stmts.length; i += chunkSize) {
+      await db.batch(stmts.slice(i, i + chunkSize));
+    }
+  } catch {
+    await saveTimeseries(db, stationId, param, points);
+  }
+}
 export async function loadTimeseries(db: D1Database, stationId: string, param: string, limit: number = 48): Promise<{ts:number,value:number}[]> {
   const {results} = await db.prepare(`SELECT ts, value FROM station_timeseries WHERE station_id=? AND param=? ORDER BY ts DESC LIMIT ?`).bind(stationId, param, limit).all();
   return (results as any[]).map(r=> ({ts:r.ts, value:r.value})).reverse();
