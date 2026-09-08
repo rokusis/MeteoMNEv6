@@ -157,6 +157,20 @@ async function load(){
 }
 load();
 <\/script></body></html>`;
+// Greska kruga pise se u bazu (ne samo u log koji trazi kljuc),
+// da se uzrok vidi na /api/graph-debug. Uspeh je brise (last_error=NULL).
+async function noteError(db: any, source: string, e: any) {
+  try {
+    if (!db) return;
+    const msg = String((e as any)?.message ?? e).slice(0, 200);
+    const now = new Date().toISOString();
+    await db.prepare(
+      `INSERT INTO source_status (source, last_success_at, last_fetched_at, last_error, last_count)
+       VALUES (?, (SELECT last_success_at FROM source_status WHERE source=?), ?, ?, 0)
+       ON CONFLICT(source) DO UPDATE SET last_fetched_at=excluded.last_fetched_at, last_error=excluded.last_error, last_count=excluded.last_count`,
+    ).bind(source, source, now, msg).run();
+  } catch {}
+}
 export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     try {
@@ -167,42 +181,42 @@ export default {
         try {
           const { refreshDueGraphs } = await import('./jobs/graphRefresh');
           if (env.DB) await refreshDueGraphs(env.DB as any);
-        } catch(e){ console.error('graph refresh cron error', e); }
+        } catch(e){ console.error('graph refresh cron error', e); await noteError(env.DB, 'graph', e); }
         try {
           const { synopWatchOpen, refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB && synopWatchOpen(Date.now())) await refreshSynop(env.DB as any);
-        } catch(e){ console.error('synop watch error', e); }
+        } catch(e){ console.error('synop watch error', e); await noteError(env.DB, 'synop', e); }
         try {
           const { runNumericalTick } = await import('./jobs/numericalWatch');
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
-        } catch(e){ console.error('numerical tick error', e); }
+        } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
         try {
           const { refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB) await refreshSynop(env.DB as any);
-        } catch (e) { console.error('synop cron error', e); }
+        } catch (e) { console.error('synop cron error', e); await noteError(env.DB, 'synop', e); }
         try {
           const { logOfficialSentinel } = await import('./jobs/officialLogger');
           if (env.DB) await logOfficialSentinel(env.DB as any);
-        } catch (e) { console.error('official log error', e); }
+        } catch (e) { console.error('official log error', e); await noteError(env.DB, 'official-log', e); }
         try {
           const { refreshHydro } = await import('./sources/hydro/liveHydro');
           if (env.DB) await refreshHydro(env.DB as any);
-        } catch (e) { console.error('hydro cron error', e); }
+        } catch (e) { console.error('hydro cron error', e); await noteError(env.DB, 'hydro', e); }
         try {
           const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
           if (env.DB) await refreshSeaSnow(env.DB as any);
-        } catch (e) { console.error('sea snow cron error', e); }
+        } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
         try {
           const { logHydroSentinel } = await import('./jobs/hydroLogger');
           if (env.DB) await logHydroSentinel(env.DB as any);
-        } catch (e) { console.error('hydro log error', e); }
+        } catch (e) { console.error('hydro log error', e); await noteError(env.DB, 'hydro-log', e); }
         try {
           const { logSeaSnowSentinel } = await import('./jobs/seaSnowLogger');
           if (env.DB) await logSeaSnowSentinel(env.DB as any);
-        } catch (e) { console.error('sea snow log error', e); }
+        } catch (e) { console.error('sea snow log error', e); await noteError(env.DB, 'sea-log', e); }
       }
     } catch(e){ console.error('cron error', e); }
   },
