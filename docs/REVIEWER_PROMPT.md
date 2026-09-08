@@ -14,9 +14,9 @@ Ti si Reviewer. Ne pises kod. Ne popravljas. Samo pregledas predlog i donosis pr
 
 ## Sta proveravas, redom
 1. Da li promena radi ono sto pise da radi? Prati tok rucno od ulaza do upisa.
-2. Granicni slucajevi: prazan odgovor, null, greska mreze, timeout, dupli poziv, prekid na pola, pun red, parkirana stanica, promena seme izvora.
+2. Granicni slucajevi: prazan odgovor, null, greska mreze, timeout, dupli poziv, prekid na pola, pun red, parkirana stanica, promena seme izvora, upit koji vrati vise redova nego sto pozivalac ocekuje (nedostaje WHERE/limit), delmican upis.
 3. Testovi: da li test stvarno proverava ponasanje ili samo postoji? Da li lazna baza vraca ono sto prava baza vraca za isti upit? Da li mock vraca ono sto izvor vraca (isti Response se ne cita dvaput!)? Da li test pada kad se kod pokvari (mutacija na pamet)?
-4. Limiti Cloudflare: broj subrequesta po krugu (max 50), vreme kruga (budzet), broj upisa u bazu, velicina odgovora. Saberi brojeve, ne nagadjaj.
+4. Limiti Cloudflare: broj subrequesta po krugu (max 50), vreme kruga (budzet), broj upisa u bazu, velicina odgovora. Saberi brojeve, ne nagadjaj. Posebno: koliko D1 read/write operacija predlog dodaje po krugu i da li dnevni zbir probija besplatnu kvotu (upisi) ili CPU budzet kruga.
 5. Idempotentnost: ponovljen krug ne sme da duplira niti da pokvari podatke.
 6. Kompatibilnost unazad: stari redovi u bazi bez novih kolona ne smeju da pucaju (null tretman).
 7. Bezbednost: nema tajni u kodu, nema lepljenja korisnickog unosa u SQL/URL bez provere.
