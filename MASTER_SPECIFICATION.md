@@ -193,8 +193,8 @@ Precipitation:
 
 Eligibility rule:
 - determine one common current reference timestamp from the newest relevant station measurement time;
-- include a station only if its observation timestamp is within 2 hours of that reference;
-- exactly 2 hours is included;
+- include a station only if its observation timestamp is within 1 hour of that reference (DEC-025);
+- exactly 1 hour is included;
 - invalid/missing observations are excluded;
 - ineligible/inactive source records are excluded;
 - ties must be supported;
@@ -270,7 +270,7 @@ Therefore:
 
 # 12. DATA FRESHNESS GOAL
 
-The target is that the app should normally lag the newest publicly available ZHMS data by roughly no more than several minutes, with an aspirational target around 3 minutes.
+The target is that the app should normally lag the newest publicly available ZHMS data by roughly no more than several minutes, with an aspirational target around 3 minutes. Current operational target for measured data is max 2-3 minutes behind publication (see DEC-026 to DEC-032).
 
 This is a public-source freshness goal, not a claim that every source changes every 3 minutes.
 
@@ -321,7 +321,7 @@ Preferred initial architecture:
 - Cloudflare Cron — scheduled ingestion
 - Cloudflare D1 — structured application data
 - optional Cloudflare R2 — raw snapshots/debugging when justified
-- React + Vite — frontend
+- React + Vite — final frontend (deferred while DEC-001 holds; current probe page is served from the Worker)
 - GitHub — source control/shared memory
 - GitHub Actions — CI/test automation
 - PWA-first — initial delivery
@@ -395,11 +395,11 @@ If a runtime cannot validate the chain, fix trust configuration or explicitly pr
 
 # 20. HTTP REQUEST BEHAVIOR
 
-Known research observations:
+Known research observations (refined 2026-09-08, see ZHMS_FORENSIC_EVIDENCE §25):
 - GET generally works on key endpoints;
 - HEAD often returns 403 and therefore must not be a core dependency;
-- key dynamic data endpoints generally lacked Last-Modified/ETag in testing;
-- some static forecast resources do provide cache metadata;
+- dynamic AWS endpoints lack usable Last-Modified/ETag;
+- static numerical forecast files provide reliable Last-Modified (If-Modified-Since returns 304 correctly; ETag is inconsistent);
 - low-volume testing did not establish a global rate limit.
 
 Do not perform aggressive probing in production.
@@ -460,7 +460,7 @@ It must not reinterpret the entire project from scratch for each task.
 
 ## 22.3 AI Reviewer
 
-Checks:
+Checks (prompt: `docs/REVIEWER_PROMPT.md`):
 - functional correctness;
 - tests;
 - security;
@@ -469,6 +469,8 @@ Checks:
 - source behavior assumptions;
 - stale/fresh logic;
 - whether the coding agent implemented something not requested.
+
+Risky changes (crons, DB writes, migrations, limits) go to `rev/*` branches and merge only on PASS verdict.
 
 ## 22.4 Owner
 
@@ -493,6 +495,7 @@ ARCHITECTURE.md
 TASKS.md
 DECISIONS.md
 REVIEW.md
+docs/REVIEWER_PROMPT.md
 ```
 
 Optional as complexity grows:
