@@ -1,7 +1,7 @@
 # ARCHITECTURE
 ## Montenegro Weather App — backend-first technical architecture
 
-Status: INITIAL TARGET ARCHITECTURE
+Status: EVOLVED ARCHITECTURE (2026-09-08, see DEC-026 to DEC-035; original target kept below for history)
 
 This document is the current implementation architecture. It must evolve through recorded decisions in `DECISIONS.md`.
 
@@ -56,7 +56,7 @@ Optional raw/debug storage:
 - Cloudflare R2
 
 Frontend:
-- React + Vite
+- Testna stranica u Workeru (PAGE u src/index.ts) dok traje DEC-001; React odlozen za finalni frontend
 
 Source control/shared memory:
 - GitHub
@@ -299,9 +299,9 @@ Current normalized observations
 
 Do not initiate new upstream requests solely for this calculation.
 
-Potential API:
+Potential API (implemented):
 
-`GET /api/stations/extremes`
+`GET /api/stations/extremes` (1h eligibility per DEC-025, measuredAt per extreme)
 
 Alternative naming such as `/api/temperature-extremes` is acceptable only if it remains consistent with the broader requirement that wind and precipitation extremes are also included.
 
@@ -311,19 +311,25 @@ Alternative naming such as `/api/temperature-extremes` is acceptable only if it 
 
 D1 should store normalized structured data.
 
-Likely logical tables/entities:
+Likely logical tables/entities (implemented 2026-09-08, names may differ from early sketch):
 
 ```text
 stations
-station_observations
+observations
 station_timeseries
-hydrology_stations
-hydrology_observations
-sea_observations
-snow_observations
-forecasts
-source_sync_status
-current_extremes_cache (optional derived cache)
+source_status
+graph_state
+bulk_state
+synop_cache
+hydro_cache
+sea_snow_cache
+numerical_days
+numerical_hours
+numerical_log
+numerical_refresh
+official_log
+hydro_log
+sea_snow_log
 ```
 
 Exact schema is to be designed task-by-task after the real source contracts are implemented.
@@ -351,13 +357,13 @@ station_timeseries(
 )
 ```
 
-Whether a wide or long schema is ultimately chosen should be decided during implementation based on query patterns and D1 simplicity.
+Whether a wide or long schema is ultimately chosen should be decided during implementation based on query patterns and D1 simplicity. (Decided 2026-09: long schema `station_timeseries(station_id, ts, param, value)`.)
 
 ---
 
-# 15. API LAYER
+# 15. API LAYER (IMPLEMENTED, extended)
 
-Potential API surface:
+Potential API surface (all implemented, plus):
 
 ```text
 GET /api/stations
@@ -370,6 +376,13 @@ GET /api/snow
 GET /api/forecast/official
 GET /api/forecast/numerical
 GET /api/status
+GET /api/synop
+GET /api/numerical-log
+GET /api/official-log
+GET /api/hydro-log
+GET /api/sea-log
+GET /api/numerical-status
+GET /api/graph-debug (live diagnostics, uncached)
 ```
 
 The final API contract should be documented once implemented.
@@ -378,11 +391,15 @@ The frontend consumes these normalized endpoints.
 
 ---
 
-# 16. SCHEDULER
+# 16. SCHEDULER (IMPLEMENTED 2026-09-08, DEC-029)
 
-There is no universal refresh schedule.
+One 1-minute combined tick (bulk, then graphs, then synop watch, then
+numerical batches) plus one 10-minute tick (loggers and slow writers).
+Graphs trigger on moved snapshots with per-tick budgets and resume
+cursors. SYNOP watches densely around 07/14/21 terms. Numerical follows
+measured windows with cursor batches. See DEC-027, DEC-030, DEC-031.
 
-Initial architecture should allow source-specific schedules, for example conceptually:
+Previous concept kept below for history:
 
 ```text
 AWS current       -> frequent polling
