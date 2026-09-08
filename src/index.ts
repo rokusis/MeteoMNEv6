@@ -210,7 +210,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/' || url.pathname === '/index.html') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     // Dijagnostika uvek ziva; ostale API rute iz ivicnog kesa 60s.
-    if (!url.pathname.startsWith('/api/') || url.pathname === '/api/graph-debug') return (this as any).handleApi(request, env);
+    if (!url.pathname.startsWith('/api/') || url.pathname === '/api/graph-debug' || url.pathname === '/api/health') return (this as any).handleApi(request, env);
     const { cachedApi } = await import('./lib/edgeCache');
     return cachedApi(request, ctx ?? null, () => (this as any).handleApi(request, env), 60);
   },
@@ -309,6 +309,13 @@ export default {
           if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
           const {results} = await env.DB.prepare(`SELECT model, last_modified, cursor_idx, status, updated_at FROM numerical_refresh`).all();
           return Response.json({ status:'ok', refresh: results });
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
+      if (url.pathname === '/api/health') {
+        try {
+          const { checkHealth } = await import('./lib/health');
+          if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
+          return Response.json({ ...(await checkHealth(env.DB as any)), at: new Date().toISOString() });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/graph-debug') {
