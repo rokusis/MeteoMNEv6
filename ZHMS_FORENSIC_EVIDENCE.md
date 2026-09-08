@@ -526,3 +526,72 @@ Use:
 `UNRESOLVED` — no safe semantic assignment yet.
 
 This language should be used in future forensic updates.
+
+---
+
+# 25. OBSERVED OPERATIONAL BEHAVIOR 2026-09 (live production)
+
+Appended 2026-09-08. Older sections above are untouched history.
+
+## Timestamps are Podgorica local time — CONFIRMED
+
+`measuredAtRaw` like `06.09.2026 23:40` is Europe/Podgorica wall time
+(CEST +2 in summer, CET +1 in winter), not UTC. Proven by comparing
+Worker fetch time (UTC) against snapshot time: a snapshot stamped 21:40
+local arrived at 19:55 UTC while fresh. Resolves the §22 timezone entry
+for AWS timestamps. Parser must subtract the DST-aware offset.
+
+## Refresh cadences — SUPPORTED per group, still no universal interval
+
+From multi-day CSV history plus live observation:
+- 9 fast main stations: new snapshot every ~10-20 min
+  (Bar, Cetinje, Herceg Novi, Kolasin, Niksic, Podgorica, Pljevlja, Ulcinj, Zabljak).
+- Luka Kotor (02LKOT20): ~15 min.
+- Most climate stations: ~60 min, aligned near the full hour.
+- H/P/GR graph refresh time approximately equals the station snapshot
+  time (not the wall clock): new graph data appears with the new snapshot.
+
+This refines §21 without contradicting it: per-group cadence is real,
+a single global interval is still wrong.
+
+## SYNOP terms drift — CONFIRMED
+
+Nominal synoptic terms 07/14/21 are not the only observed hours.
+Live observations showed Hour values 12, 15, 17, 19, 20, 21, 22 on
+various days. Night gap is real: around 04:30 local the source returns
+empty (`empty sinop`), consistent with no night term.
+
+## Numerical Last-Modified pattern — SUPPORTED
+
+From ~800-row `numerical_log` (POD sentinel, 10-min checks):
+- `e3km`: new Last-Modified almost daily ~09:25-09:56
+  (Sep 4 09:56, Sep 5 09:22, Sep 6 09:42, Sep 7 09:27, Sep 8 09:29).
+- `a3km`: 1-2x daily, morning to midday, irregular
+  (Sep 4 06:50, Sep 5 12:26, Sep 6 06:52, Sep 7 11:17, Sep 8 06:50).
+- `If-Modified-Since` reliably returns 304 (770 observed). ETag
+  responses were inconsistent (weak `W/...-gzip` variants observed).
+  Detection lag of a change with 10-min checks: 3-30 min observed.
+
+## Worker execution limits hit live — CONFIRMED
+
+- Pulling all 125 numerical files (25 cities x 5 days) in one scheduled
+  invocation fails with `Too many subrequests` (3 occurrences in our own
+  logs; subrequest ceiling is 50 per invocation).
+- Safe working shape found: max ~20 stations (40 subrequests) plus bulk
+  per 1-minute tick, per-tick 20s time budget, persisted resume cursors.
+- First-fill of full graph history per station can time out a tick;
+  saving only new points (capped) fixed it.
+
+## Source reachability varies by network — SUPPORTED
+
+`meteo.co.me` timed out repeatedly from non-Cloudflare datacenter
+networks (EU/US, 10s timeouts) while the Cloudflare Worker fetched the
+same URLs successfully at the same time. Treat direct reachability as
+network-dependent; the cached DB is the availability strategy.
+
+## Hydro and sea/snow live shape — CONFIRMED
+
+- Hydrology: 42 stations, 37 observations served live.
+- Sea: 3 places reported; snow 0 rows in summer (correct, not missing).
+- Hydro cadence under 48h measurement (`hydro_log`); sea/snow under
+  48h measurement (`sea_snow_log`).
