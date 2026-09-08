@@ -336,3 +336,160 @@ Consequence:
 Sva mjesta sa 2h (ARCHITECTURE, MASTER_SPECIFICATION, TASKS, kod) mijenjaju se u 1h. API za extremes mora vracati measuredAt za svaki ekstrem da frontend moze diskretno prikazati vrijeme.
 
 Date: 2026-09-02
+
+---
+
+# DEC-026 — Single writer cron, readers from database
+
+Decision:
+Only the scheduled cron writes to the database. All API routes and all users read from the database. No request path performs live source fetches.
+
+Why:
+Live fetching per user multiplies upstream load by audience size (proven risk at 1M users). A single writer bounds upstream load regardless of audience.
+
+Consequence:
+Every source needs a cron writer plus DB-first API with stale fallback. Live fetch remains only as a cold-start fallback.
+
+Date: 2026-09-08
+Proof: hydro first-call-live/second-from-DB; edge cache 0.21s to 0.067s.
+
+---
+
+# DEC-027 — Event-driven graph refresh, no fixed windows
+
+Decision:
+Graph (H/P/GR) fetching triggers on moved bulk snapshots, not on fixed time windows.
+
+Why:
+A fixed window guarantees lag of at least the window length. Simulation with real snapshots showed 10-14 min lag with windows versus ~3 min event-driven.
+
+Consequence:
+Bulk snapshots are the event source. A 90s guard skips snapshots younger than graph publication delay.
+
+Date: 2026-09-08
+Proof: local 4h simulation, max lag 2.5-3.5 min all groups, Podgorica H/P/GR fresh live.
+
+---
+
+# DEC-028 — Write only on content change (fingerprint)
+
+Decision:
+Compare a content fingerprint before persisting; skip writes when unchanged and record only a heartbeat.
+
+Why:
+D1 free tier limits daily writes. Blind per-minute rewrites of identical data would exceed quota (~160k/day vs 100k limit).
+
+Consequence:
+Bulk stations/observations and future writers persist on change only. Heartbeat keeps freshness semantics intact.
+
+Date: 2026-09-08
+Proof: bulk.fingerprint test, second identical round writes zero station rows.
+
+---
+
+# DEC-029 — One 1-minute tick with per-tick budgets and resume cursors
+
+Decision:
+A single 1-minute scheduled tick runs bulk, graphs, synop watch, and numerical in order, each with a budget (max items, max subrequests under 50, 20s time budget). Unfinished work resumes next tick from persisted cursors.
+
+Why:
+Worker invocations have subrequest, CPU, and time limits. Unbounded per-tick work dies mid-tick without trace (observed: first-fill timeouts starving Podgorica).
+
+Consequence:
+Every batch job keeps a cursor in D1. Partial progress is normal and expected, never an error.
+
+Date: 2026-09-08
+Proof: graph_state 5 to 34 rows draining; miss ~0; heartbeat source_status graph.
+
+---
+
+# DEC-030 — Numerical windows from measurement plus batched backfill
+
+Decision:
+Watch e3km densely 09:00-10:30 and a3km 06:00-13:00 local (from 5 days of numerical_log evidence), backfill in 3-city batches with a persisted cursor. The old pull-all-125-at-once is retired.
+
+Why:
+The old full pull hit the subrequest limit 3 times (in our own logs). Windows come from measured Last-Modified changes, not assumptions.
+
+Consequence:
+Front-page cities refresh first. Old sentinel logging stays until the new path proves itself live, then its pull call is removed (logging kept).
+
+Date: 2026-09-08
+Proof: e3km 09:27 and a3km 06:50/11:17 changes in numerical_log; cursor 25/25 done live.
+
+---
+
+# DEC-031 — SYNOP dense watch around terms, DB-first serving
+
+Decision:
+Check SYNOP every minute inside 06:30-08:30, 13:30-15:30, 20:30-22:30 local windows around the 07/14/21 terms, every 10 minutes otherwise. Persist only new Hour/Day terms. API reads the database.
+
+Why:
+Term publish minute is unknown, so sparse checking alone can lag ~10 min on intraday weather changes (e.g. sun to rain at 14:01). Dense windows bound lag to 2-3 min at negligible cost.
+
+Consequence:
+Night gap serves the last valid term with its timestamp instead of an error.
+
+Date: 2026-09-08
+Proof: watch windows 8/8 verified; live synop hour 17 fresh from DB.
+
+---
+
+# DEC-032 — 60s edge cache for API, diagnostics uncached
+
+Decision:
+Serve API routes through edge cache with 60s max-age plus stale-while-revalidate. Diagnostic routes stay live.
+
+Why:
+Audience-scale reads must not reach D1 per user. 60s staleness is negligible against 2-3 min source cadence.
+
+Consequence:
+Cache-Control public max-age 60 verified live; /api/graph-debug bypasses cache.
+
+Date: 2026-09-08
+Proof: API 0.21s first, 0.067s cached; cache-control header live.
+
+---
+
+# DEC-033 — Machine tests, deploys, and migrates; manual baseline once
+
+Decision:
+GitHub Actions runs tests on every push and, on success, deploys the worker and applies D1 migrations automatically. The pre-existing 16 migrations were baselined manually once.
+
+Why:
+Removes manual deploy/migrate pastes and the errors pasted commands caused (e.g. commands pasted into source files).
+
+Consequence:
+Owner pastes nothing per change. Migrations must stay ordered and rerunnable-safe for new files.
+
+Date: 2026-09-08
+Proof: CI+Deploy green runs on pushes with zero manual commands.
+
+---
+
+# DEC-034 — Independent reviewer with prompt, branch gate for risky changes
+
+Decision:
+A second AI system reviews diffs against docs/REVIEWER_PROMPT.md before risky changes merge (crons, DB writes, migrations, limits). Trivial changes go direct.
+
+Why:
+One agent must not be trusted alone; different models have different blind spots. Stale docs must be fixed before review, or the reviewer judges against outdated rules.
+
+Consequence:
+Risky work goes to rev/* branches with PASS verdict required.
+
+Date: 2026-09-08
+
+---
+
+# DEC-035 — Local verification rig before live cycles
+
+Decision:
+Before any live deploy cycle: simulate with real snapshots, run real typecheck locally, and exercise test logic in Node. Live cycles are for environment surprises only.
+
+Why:
+Blind live iteration (deploy, wait 15 min, fail) burned days. Simulation reproduced queue starvation in seconds.
+
+Consequence:
+No deploy without green local sim/typecheck/logic checks plus CI.
+Date: 2026-09-08
