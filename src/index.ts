@@ -231,6 +231,10 @@ export default {
           const { logSeaSnowSentinel } = await import('./jobs/seaSnowLogger');
           if (env.DB) await logSeaSnowSentinel(env.DB as any);
         } catch (e) { console.error('sea snow log error', e); await noteError(env.DB, 'sea-log', e); }
+        try {
+          const { logAirSentinel } = await import('./jobs/airLogger');
+          if (env.DB) await logAirSentinel(env.DB as any);
+        } catch (e) { console.error('air log error', e); await noteError(env.DB, 'air-log', e); }
       }
     } catch(e){ console.error('cron error', e); }
   },
@@ -329,6 +333,13 @@ export default {
         try {
           if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
           const {results} = await env.DB.prepare(`SELECT checked_at, status, sea_count, snow_count FROM sea_snow_log ORDER BY checked_at DESC LIMIT 100`).all();
+          return Response.json({ status:'ok', count: results.length, logs: results });
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
+      if (url.pathname === '/api/air-log') {
+        try {
+          if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
+          const {results} = await env.DB.prepare(`SELECT checked_at, status, station_count FROM air_log ORDER BY checked_at DESC LIMIT 100`).all();
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }

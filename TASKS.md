@@ -597,8 +597,8 @@ Status: DONE (zero manual commands per change)
 ## TASK-157 — /api/health watchdog
 Status: DONE (per-source age, ok/stale/unknown)
 
-## TASK-158 — 48h measurement loggers (official/hydro/sea)
-Status: IN PROGRESS (collecting; reading ~2026-09-10)
+## TASK-158 — 48h measurement loggers (official/hydro/sea/air)
+Status: IN PROGRESS (collecting; air/EPA merac dodat 2026-09-09, reading ~2026-09-11)
 
 ## TASK-159 — 48h pattern reading and windows
 Status: TODO (after TASK-158)
