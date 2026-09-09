@@ -188,9 +188,16 @@ async function noteError(db: any, source: string, e: any) {
 export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     try {
+      const tickSource = event.cron === "* * * * *" ? 'tick-minute' : 'tick-10min';
+      try {
+        const { markTickStart } = await import('./lib/tick');
+        await markTickStart(env.DB, tickSource);
+      } catch {}
       if (event.cron === "* * * * *") {
-        const { fetchAndPersist } = await import('./sources/zhms-aws/live');
-        if (env.DB) await fetchAndPersist(env.DB as any);
+        try {
+          const { fetchAndPersist } = await import('./sources/zhms-aws/live');
+          if (env.DB) await fetchAndPersist(env.DB as any);
+        } catch(e){ console.error('bulk error', e); await noteError(env.DB, 'aws', e); }
 
         try {
           const { runHydroTick } = await import('./jobs/hydroWatch');
@@ -236,6 +243,10 @@ export default {
           if (env.DB) await refreshSeaSnow(env.DB as any);
         } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
       }
+      try {
+        const { markTickEnd } = await import('./lib/tick');
+        await markTickEnd(env.DB, tickSource);
+      } catch {}
     } catch(e){ console.error('cron error', e); }
   },
   async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
