@@ -19,17 +19,12 @@ function sentinelUrl(model: NumModel): string {
   return `https://www.meteo.co.me/Meteorologija/Pr/Gradovi/${folder}/POD-${letter}1.html`;
 }
 
+// Sta smo stvarno povukli (ne sta izvor ima - to je dijagnostika u logu).
+// Ako je prazno, ne znamo sta imamo pa moramo povuci.
 async function lastKnownModified(db: D1Database, model: NumModel): Promise<string | null> {
   try {
     const r = (await db.prepare(`SELECT last_modified FROM numerical_refresh WHERE model=?`).bind(model).first()) as any;
-    if (r?.last_modified) return r.last_modified;
-  } catch {}
-  try {
-    const r = (await db
-      .prepare(`SELECT last_modified FROM numerical_log WHERE city='POD' AND model=? ORDER BY checked_at DESC LIMIT 1`)
-      .bind(model)
-      .first()) as any;
-    return r?.last_modified ?? null;
+    return r?.last_modified || null;
   } catch {}
   return null;
 }

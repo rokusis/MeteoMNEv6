@@ -81,6 +81,15 @@ describe('numerical straza', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(null, { status: 304 }) as any);
     expect((await checkModelSentinel(db, 'e3km')).changed).toBe(false);
   });
+  it('meri po povucenom, ne po logu: staro povuceno + novo na izvoru = vuci', async () => {
+    const db = fakeDb();
+    db.refresh['e3km'] = { last_modified: 'Tue, 08 Sep 2026 09:25:22 GMT', cursor_idx: 25, status: 'done' };
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () => new Response('x', { status: 200, headers: { 'Last-Modified': 'Wed, 09 Sep 2026 09:25:22 GMT' } }) as any,
+    );
+    expect((await checkModelSentinel(db, 'e3km')).changed).toBe(true);
+    expect(db.refresh['e3km'].last_modified).toBe('Wed, 09 Sep 2026 09:25:22 GMT');
+  });
   it('tura ide grad po grad sa kursorom', async () => {
     const db = fakeDb();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE, { status: 200 }) as any);
