@@ -42,4 +42,10 @@ describe('grupni upis', () => {
     await saveTimeseriesBatch(fakeDb({ batchOk: true, calls }), '02PDGR10', 'H', []);
     expect(calls).toEqual([]);
   });
+  it('prosledjen rok zaustavlja bez naknadnog punog upisa', async () => {
+    const calls: string[] = [];
+    const n = await saveTimeseriesBatch(fakeDb({ batchOk: true, calls }), '02PDGR10', 'H', PTS, 40, Date.now() - 1000);
+    expect(n).toBe(0);
+    expect(calls).toEqual([]);
+  });
 });

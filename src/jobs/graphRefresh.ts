@@ -124,9 +124,17 @@ export async function refreshDueGraphs(db: D1Database, nowMs: number = Date.now(
           const cut = pts.length > MAX_POINTS_PER_PARAM ? pts.slice(-MAX_POINTS_PER_PARAM) : pts;
           return prevMax == null ? cut : cut.filter((p: any) => p.ts > (prevMax as number));
         };
-      if (hPts.length) await saveTimeseriesBatch(db, d.stationId, 'H', onlyNew(hPts));
-      if (pPts.length) await saveTimeseriesBatch(db, d.stationId, 'P', onlyNew(pPts));
-      if (grPts.length) await saveTimeseriesBatch(db, d.stationId, 'GR', onlyNew(grPts));
+      // Budzet vazi i usred velike stanice: stanemo, ostatak sledeci krug
+      // nastavlja (prevMax se pomerio pa onlyNew hvata ostatak).
+      const deadline = t0 + TICK_BUDGET_MS;
+      const want: [string, any[]][] = [['H', onlyNew(hPts)], ['P', onlyNew(pPts)], ['GR', onlyNew(grPts)]];
+      let stopped = false;
+      for (const [param, pts] of want) {
+        if (!pts.length || stopped) continue;
+        const n = await saveTimeseriesBatch(db, d.stationId, param, pts, 40, deadline);
+        if (n < pts.length) stopped = true;
+      }
+      if (stopped) break;
         const nx = nextStateOnResult(d, nowMs, changed, snapMs ?? d.lastSnapshotMs);
         await saveState(db, nx);
         if (changed) updated++;

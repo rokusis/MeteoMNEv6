@@ -7,19 +7,29 @@ export async function saveTimeseries(db: D1Database, stationId: string, param: s
 
 // Grupni upis: stotine poziva stanemo u par serija umesto stotine krugova.
 // Jedna serija = jedan odlazak do baze. Na gresku pada nazad na obican upis.
-export async function saveTimeseriesBatch(db: D1Database, stationId: string, param: string, points: {ts:number,value:number|null}[], chunkSize: number = 40): Promise<void> {
+// Vraca broj sacuvanih tacaka; uz deadline staje ranije (ostatak sledeci krug).
+export async function saveTimeseriesBatch(db: D1Database, stationId: string, param: string, points: {ts:number,value:number|null}[], chunkSize: number = 40, deadlineMs: number = 0): Promise<number> {
   const clean = points.filter((p) => p.value != null);
-  if (!clean.length) return;
+  if (!clean.length) return 0;
   const stmts = clean.map((p) =>
     db.prepare(`INSERT INTO station_timeseries (station_id, ts, param, value) VALUES (?, ?, ?, ?) ON CONFLICT(station_id, ts, param) DO UPDATE SET value=excluded.value`).bind(stationId, p.ts, param, p.value as number),
   );
+  let saved = 0;
+  let stopped = false;
   try {
     for (let i = 0; i < stmts.length; i += chunkSize) {
+      if (deadlineMs && Date.now() > deadlineMs) {
+        stopped = true;
+        break;
+      }
       await db.batch(stmts.slice(i, i + chunkSize));
+      saved += Math.min(chunkSize, stmts.length - i);
     }
-  } catch {
-    await saveTimeseries(db, stationId, param, points);
-  }
+    if (saved >= stmts.length) return saved;
+  } catch {}
+  if (stopped || saved > 0) return saved;
+  await saveTimeseries(db, stationId, param, points);
+  return clean.length;
 }
 export async function loadTimeseries(db: D1Database, stationId: string, param: string, limit: number = 48): Promise<{ts:number,value:number}[]> {
   const {results} = await db.prepare(`SELECT ts, value FROM station_timeseries WHERE station_id=? AND param=? ORDER BY ts DESC LIMIT ?`).bind(stationId, param, limit).all();
