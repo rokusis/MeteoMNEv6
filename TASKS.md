@@ -604,7 +604,7 @@ Status: IN PROGRESS (collecting; air/EPA merac dodat 2026-09-09, reading ~2026-0
 Status: IN PROGRESS (official+hidro+more/sneg gusta straza na 2 min ceo dan live 2026-09-09, sentineli ugaseni; air citanje ~2026-09-11)
 
 ## TASK-160 — CPU diet verdict
-Status: IN PROGRESS (otkucaj kruga live 2026-09-09: pocetak/kraj u source_status; bulk zasticen; citanje za ~15 min)
+Status: IN PROGRESS (otkucaj live: minutni krug krece i zavrsava svaki minut, ~35s; 11:00-11:52 hidro tisina bila lazina uzbuna - write-on-change; prave rupe ostaju nocne 00-08h, prati se nocas)
 
 ## TASK-161 — Reviewer first use
 Status: TODO (prompt ready per DEC-034)
