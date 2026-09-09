@@ -286,7 +286,7 @@ export default {
             const html=await fetchGraph(tip as any, id);
             const all=parseDataAll(html);
             const pts=(all as any)[par]||[];
-            if(env.DB && pts.length) { const { saveTimeseries }=await import('./lib/timeseriesDb'); await saveTimeseries(env.DB as any, id, par, pts); }
+            if(env.DB && pts.length) { const { saveTimeseriesBatch }=await import('./lib/timeseriesDb'); await saveTimeseriesBatch(env.DB as any, id, par, pts.slice(-500)); }
             return Response.json({ status:'ok', source:'live', param:par, count: pts.length, points: pts.slice(-lim) });
           }
           return Response.json({ status:'ok', source:'db', param:par, count:data.length, points:data });
