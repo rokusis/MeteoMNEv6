@@ -204,6 +204,10 @@ export default {
           const { runNumericalTick } = await import('./jobs/numericalWatch');
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
         } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
+        try {
+          const { runOfficialTick } = await import('./jobs/officialWatch');
+          if (env.DB) await runOfficialTick(env.DB as any, Date.now());
+        } catch(e){ console.error('official tick error', e); await noteError(env.DB, 'official', e); }
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
