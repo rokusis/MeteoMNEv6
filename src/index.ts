@@ -197,6 +197,14 @@ export default {
           if (env.DB) await runHydroTick(env.DB as any, Date.now());
         } catch(e){ console.error('hydro tick error', e); await noteError(env.DB, 'hydro', e); }
         try {
+          const { runOfficialTick } = await import('./jobs/officialWatch');
+          if (env.DB) await runOfficialTick(env.DB as any, Date.now());
+        } catch(e){ console.error('official tick error', e); await noteError(env.DB, 'official', e); }
+        try {
+          const { runSeaSnowTick } = await import('./jobs/seaSnowWatch');
+          if (env.DB) await runSeaSnowTick(env.DB as any, Date.now());
+        } catch(e){ console.error('sea snow tick error', e); await noteError(env.DB, 'sea-snow', e); }
+        try {
           const { refreshDueGraphs } = await import('./jobs/graphRefresh');
           if (env.DB) await refreshDueGraphs(env.DB as any);
         } catch(e){ console.error('graph refresh cron error', e); await noteError(env.DB, 'graph', e); }
@@ -208,10 +216,6 @@ export default {
           const { runNumericalTick } = await import('./jobs/numericalWatch');
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
         } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
-        try {
-          const { runOfficialTick } = await import('./jobs/officialWatch');
-          if (env.DB) await runOfficialTick(env.DB as any, Date.now());
-        } catch(e){ console.error('official tick error', e); await noteError(env.DB, 'official', e); }
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
@@ -219,10 +223,6 @@ export default {
           const { refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB) await refreshSynop(env.DB as any);
         } catch (e) { console.error('synop cron error', e); await noteError(env.DB, 'synop', e); }
-        try {
-          const { logOfficialSentinel } = await import('./jobs/officialLogger');
-          if (env.DB) await logOfficialSentinel(env.DB as any);
-        } catch (e) { console.error('official log error', e); await noteError(env.DB, 'official-log', e); }
         try {
           const { refreshHydro } = await import('./sources/hydro/liveHydro');
           if (env.DB) await refreshHydro(env.DB as any);
@@ -232,13 +232,9 @@ export default {
           if (env.DB) await refreshSeaSnow(env.DB as any);
         } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
         try {
-          const { logSeaSnowSentinel } = await import('./jobs/seaSnowLogger');
-          if (env.DB) await logSeaSnowSentinel(env.DB as any);
-        } catch (e) { console.error('sea snow log error', e); await noteError(env.DB, 'sea-log', e); }
-        try {
-          const { logAirSentinel } = await import('./jobs/airLogger');
-          if (env.DB) await logAirSentinel(env.DB as any);
-        } catch (e) { console.error('air log error', e); await noteError(env.DB, 'air-log', e); }
+          const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
+          if (env.DB) await refreshSeaSnow(env.DB as any);
+        } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
       }
     } catch(e){ console.error('cron error', e); }
   },

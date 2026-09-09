@@ -1,18 +1,13 @@
 import { fetchOfficialLive } from '../sources/zhms-official-forecast/liveOfficial';
 import { officialFingerprint } from './officialLogger';
 
-// Gusti prozor za zvanicnu prognozu (sati su UTC).
-// Merenje 07-09.09. pokazalo smenu dana ~11:10 i re-izdanje ~12:50,
-// pa prozor 10:30-13:30 hvata obe sa marginom od sat vremena.
-// Van prozora ostaje postojeci sentinel na 10 min kao sigurnosna mreza.
-const OPEN_MIN = 10 * 60 + 30;
-const CLOSE_MIN = 13 * 60 + 30;
-
+// Gusta straza za zvanicnu prognozu: provera na svaka 2 minuta ceo dan.
+// Merenje 07-09.09. pokazalo smenu dana ~11:10 i re-izdanje ~12:50 UTC,
+// ali pravilo svezine trazi puno radno vreme pa prozor sluzi samo kao
+// dijagnostika, ne kao kapija. 10-minutni sentinel je ugasen jer ga
+// ova straza potpuno zamenjuje.
 export function officialWatchOpen(nowMs: number): boolean {
-  const d = new Date(nowMs);
-  const mins = d.getUTCHours() * 60 + d.getUTCMinutes();
-  if (mins < OPEN_MIN || mins >= CLOSE_MIN) return false;
-  return d.getUTCMinutes() % 2 === 0;
+  return new Date(nowMs).getUTCMinutes() % 2 === 0;
 }
 
 // Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku
