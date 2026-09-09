@@ -29,7 +29,7 @@ Acceptance:
 ---
 
 ## TASK-002 — Cloud-first development setup
-Status: TODO
+Status: DONE (Codespace + Actions + local agent proven in practice)
 
 Goal:
 Create a browser/cloud-friendly development setup suitable for the owner’s weak Windows 10 laptop.
@@ -229,7 +229,7 @@ Acceptance:
 ---
 
 ## TASK-031 — Station detail API
-Status: TODO
+Status: DONE (includes H/P/GR + synop, 2026-09)
 
 Endpoint target:
 `GET /api/stations/:id`
@@ -242,7 +242,7 @@ Acceptance:
 ---
 
 ## TASK-032 — Station observations API
-Status: TODO
+Status: DONE (covered by :id detail response, no separate route needed)
 
 Endpoint target:
 `GET /api/stations/:id/observations`
@@ -418,7 +418,7 @@ Source:
 # PHASE 8 — SYNOP
 
 ## TASK-080 — SYNOP Montenegro adapter
-Status: TODO
+Status: DONE (parse, kind, merge, live, cache, watch windows; 2026-09)
 
 Source:
 `/synopT.php`
@@ -488,7 +488,7 @@ Do not depend on HEAD.
 # PHASE 12 — MONITORING
 
 ## TASK-120 — Source sync status
-Status: TODO
+Status: DONE (source_status + /api/health + /api/graph-debug, 2026-09)
 
 Track:
 - fetch success;
@@ -512,14 +512,14 @@ Do not allow a silent schema change to corrupt normalized data.
 # PHASE 13 — TESTING / HARDENING
 
 ## TASK-130 — Forensic fixtures
-Status: TODO
+Status: DONE (proven fixtures across parser tests)
 
 Capture safe representative source responses for repeatable tests.
 
 ---
 
 ## TASK-131 — Negative-source fixtures
-Status: TODO
+Status: DONE (no data, empty, malformed covered in tests)
 
 Test:
 - `no data`;
@@ -532,7 +532,7 @@ Test:
 ---
 
 ## TASK-132 — Full backend integration test
-Status: TODO
+Status: DONE (live proofs per source + local simulation with real snapshots)
 
 Validate the end-to-end path:
 
@@ -541,7 +541,7 @@ Validate the end-to-end path:
 ---
 
 ## TASK-133 — Reviewer hardening pass
-Status: TODO
+Status: IN PROGRESS (prompt + branch gate ready, first review pending)
 
 AI Reviewer checks:
 - architecture drift;
@@ -571,10 +571,52 @@ This is intentionally later than the backend foundation.
 
 ---
 
+# PHASE 15 — OPERATIONS (beyond initial plan, all driven by measured evidence)
+
+## TASK-150 — Event-driven graph refresh
+Status: DONE (2026-09-06, sim max lag ~3 min, live Podgorica fresh)
+
+## TASK-151 — Fingerprint-skip writes
+Status: DONE (bulk + writers persist on change only)
+
+## TASK-152 — 1-minute tick with budgets and cursors
+Status: DONE (limit 10, 20s budget, resume; subrequest guard)
+
+## TASK-153 — Numerical windows and cursor batches
+Status: DONE (e3km 09:00-10:30, a3km 06:00-13:00; full-pull retired)
+
+## TASK-154 — SYNOP dense watch + DB serving
+Status: DONE (windows around 07/14/21, night serves last term)
+
+## TASK-155 — Edge cache 60s for API
+Status: DONE (0.21s to 0.067s live)
+
+## TASK-156 — Auto CI + deploy + migrations
+Status: DONE (zero manual commands per change)
+
+## TASK-157 — /api/health watchdog
+Status: DONE (per-source age, ok/stale/unknown)
+
+## TASK-158 — 48h measurement loggers (official/hydro/sea)
+Status: IN PROGRESS (collecting; reading ~2026-09-10)
+
+## TASK-159 — 48h pattern reading and windows
+Status: TODO (after TASK-158)
+
+## TASK-160 — CPU diet verdict
+Status: TODO (daily limit email after diet deploy)
+
+## TASK-161 — Reviewer first use
+Status: TODO (prompt ready per DEC-034)
+
+---
+
 # CURRENT NEXT TASK
 
-Unless a new blocking discovery changes the order, start with:
+Live tracker: HANDOFF.md (open items). As of 2026-09-08:
 
-`TASK-001 — Repository skeleton`
-
-The Architect may split TASK-001 into even smaller owner-facing steps.
+1. Morning numerical re-proof after 10h (windows live).
+2. CPU diet verdict from daily limit email.
+3. 48h pattern readings (official/hydro/sea) ~2026-09-10, then windows.
+4. First reviewer use on next risky change.
+5. TASK-121 schema change detection (real gap, unscheduled).
