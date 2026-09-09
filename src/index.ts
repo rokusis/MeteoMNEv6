@@ -193,6 +193,10 @@ export default {
         if (env.DB) await fetchAndPersist(env.DB as any);
 
         try {
+          const { runHydroTick } = await import('./jobs/hydroWatch');
+          if (env.DB) await runHydroTick(env.DB as any, Date.now());
+        } catch(e){ console.error('hydro tick error', e); await noteError(env.DB, 'hydro', e); }
+        try {
           const { refreshDueGraphs } = await import('./jobs/graphRefresh');
           if (env.DB) await refreshDueGraphs(env.DB as any);
         } catch(e){ console.error('graph refresh cron error', e); await noteError(env.DB, 'graph', e); }
@@ -227,10 +231,6 @@ export default {
           const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
           if (env.DB) await refreshSeaSnow(env.DB as any);
         } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
-        try {
-          const { logHydroSentinel } = await import('./jobs/hydroLogger');
-          if (env.DB) await logHydroSentinel(env.DB as any);
-        } catch (e) { console.error('hydro log error', e); await noteError(env.DB, 'hydro-log', e); }
         try {
           const { logSeaSnowSentinel } = await import('./jobs/seaSnowLogger');
           if (env.DB) await logSeaSnowSentinel(env.DB as any);

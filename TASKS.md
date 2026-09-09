@@ -601,7 +601,7 @@ Status: DONE (per-source age, ok/stale/unknown)
 Status: IN PROGRESS (collecting; air/EPA merac dodat 2026-09-09, reading ~2026-09-11)
 
 ## TASK-159 — 48h pattern reading and windows
-Status: IN PROGRESS (official gusti prozor 10:30-13:30 UTC na 2 min live 2026-09-09; hydro/sea/air citanje ~2026-09-11)
+Status: IN PROGRESS (official gusti prozor 10:30-13:30 UTC live; hidro gusta straza na 2 min live 2026-09-09, sentinel ugasen; sea/air citanje ~2026-09-11)
 
 ## TASK-160 — CPU diet verdict
 Status: TODO (daily limit email after diet deploy)
