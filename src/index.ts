@@ -212,6 +212,10 @@ export default {
           if (env.DB) await runSeaSnowTick(env.DB as any, Date.now());
         } catch(e){ console.error('sea snow tick error', e); await noteError(env.DB, 'sea-snow', e); }
         try {
+          const { runNumericalTick } = await import('./jobs/numericalWatch');
+          if (env.DB) await runNumericalTick(env.DB as any, Date.now());
+        } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
+        try {
           const { refreshDueGraphs } = await import('./jobs/graphRefresh');
           if (env.DB) await refreshDueGraphs(env.DB as any);
         } catch(e){ console.error('graph refresh cron error', e); await noteError(env.DB, 'graph', e); }
@@ -219,10 +223,6 @@ export default {
           const { synopWatchOpen, refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB && synopWatchOpen(Date.now())) await refreshSynop(env.DB as any);
         } catch(e){ console.error('synop watch error', e); await noteError(env.DB, 'synop', e); }
-        try {
-          const { runNumericalTick } = await import('./jobs/numericalWatch');
-          if (env.DB) await runNumericalTick(env.DB as any, Date.now());
-        } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);

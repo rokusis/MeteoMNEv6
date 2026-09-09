@@ -65,11 +65,12 @@ describe('numerical straza', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-  it('e3km ujutru oko 09:30, a3km prepodne', () => {
-    expect(numericalWatchModels(Date.UTC(2026, 8, 6, 7, 5))).toEqual(['e3km', 'a3km']);
+  it('oba modela na parni minut ceo dan, inace nista', () => {
+    expect(numericalWatchModels(Date.UTC(2026, 8, 6, 7, 4))).toEqual(['e3km', 'a3km']);
+    expect(numericalWatchModels(Date.UTC(2026, 8, 6, 3, 0))).toEqual(['e3km', 'a3km']);
+    expect(numericalWatchModels(Date.UTC(2026, 8, 6, 23, 58))).toEqual(['e3km', 'a3km']);
+    expect(numericalWatchModels(Date.UTC(2026, 8, 6, 7, 5))).toEqual([]);
     expect(numericalWatchModels(Date.UTC(2026, 8, 6, 12, 5))).toEqual([]);
-    expect(numericalWatchModels(Date.UTC(2026, 8, 6, 5, 0))).toEqual(['a3km']);
-    expect(numericalWatchModels(Date.UTC(2026, 8, 6, 1, 0))).toEqual([]);
   });
   it('sentinel: 200 menja, 304 ne menja', async () => {
     const db = fakeDb();

@@ -1,4 +1,3 @@
-import { podgoricaLocal } from '../sources/zhms-aws/graphSchedule';
 import { zhmsFetch } from '../lib/http';
 import { buildNumericalUrl } from '../sources/numerical/urls';
 import { parseNumerical } from '../sources/numerical/parseNumerical';
@@ -6,15 +5,12 @@ import { NUMERICAL_STATIONS } from '../sources/numerical/stations';
 
 export type NumModel = 'a3km' | 'e3km';
 
-// Prozori iz merenja numerical_log (4 dana zaredom):
-// e3km svako jutro ~09:30, a3km negde prepodne 06-13h.
+// Gusta straza: jeftina uslovna provera (304 bez tela) na svaka 2 minuta ceo dan.
+// Prozori su ukinuti 2026-09-09 jer izdanja stizu i van njih (e3km u 11:25
+// lokalno), a provera je toliko jeftina da prozori ne trebaju.
 export function numericalWatchModels(nowMs: number = Date.now()): NumModel[] {
-  const { hour, minute } = podgoricaLocal(nowMs);
-  const m = hour * 60 + minute;
-  const out: NumModel[] = [];
-  if (m >= 540 && m < 630) out.push('e3km');
-  if (m >= 360 && m < 780) out.push('a3km');
-  return out;
+  if (new Date(nowMs).getUTCMinutes() % 2 !== 0) return [];
+  return ['e3km', 'a3km'];
 }
 
 function sentinelUrl(model: NumModel): string {
@@ -167,7 +163,13 @@ export async function runNumericalTick(db: D1Database, nowMs: number = Date.now(
     try {
       const s = await checkModelSentinel(db, model);
       if (!s.changed) continue;
-    } catch {
+    } catch (e) {
+      try {
+        await db
+          .prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`)
+          .bind('POD', model, null, null, new Date().toISOString(), 'error:' + String((e as any)?.message ?? e).slice(0, 120))
+          .run();
+      } catch {}
       continue;
     }
     try {
