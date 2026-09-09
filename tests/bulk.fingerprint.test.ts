@@ -7,25 +7,31 @@ var posljednje = {"glavna":[["02PDGR10","glavna","Podgorica","04.09.2026 17:10",
 `;
 
 function fakeDb() {
-  let fp: string | null = null;
+  const fps = new Map<string, string>();
   const writes: string[] = [];
   return {
     writes,
     prepare: (sql: string) => ({
       bind: (..._a: any[]) => ({
         run: async () => {
-          if (sql.includes('INTO bulk_state')) fp = _a[1];
+          if (sql.includes('INTO bulk_state')) fps.set(_a[0], _a[1]);
           if (sql.includes('INTO stations') || sql.includes('INTO observations')) writes.push(sql.slice(0, 24));
         },
-        first: async () => {
-          if (sql.includes('FROM bulk_state')) return fp == null ? null : { fingerprint: fp };
-          if (sql.includes('source_status')) return null;
-          return null;
+        first: async () => null,
+        all: async () => {
+          if (sql.includes('FROM bulk_state')) {
+            return { results: [...fps.entries()].map(([source, fingerprint]) => ({ source, fingerprint })) };
+          }
+          return { results: [] };
         },
-        all: async () => ({ results: [] }),
       }),
-      first: async () => (sql.includes('FROM bulk_state') ? (fp == null ? null : { fingerprint: fp }) : null),
-      all: async () => ({ results: [] }),
+      first: async () => null,
+      all: async () => {
+        if (sql.includes('FROM bulk_state')) {
+          return { results: [...fps.entries()].map(([source, fingerprint]) => ({ source, fingerprint })) };
+        }
+        return { results: [] };
+      },
       run: async () => {},
     }),
   } as any;
