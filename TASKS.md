@@ -601,7 +601,7 @@ Status: DONE (per-source age, ok/stale/unknown)
 Status: IN PROGRESS (collecting; air/EPA merac dodat 2026-09-09, reading ~2026-09-11)
 
 ## TASK-159 — 48h pattern reading and windows
-Status: IN PROGRESS (official+hidro+more/sneg gusta straza na 2 min ceo dan live 2026-09-09, sentineli ugaseni; air citanje ~2026-09-11)
+Status: IN PROGRESS (official+hidro+more/sneg+numericka gusta straza live 2026-09-09, sentineli ugaseni; graph lag merac live, citanje za dan-dva; air citanje ~2026-09-11)
 
 ## TASK-160 — CPU diet verdict
 Status: IN PROGRESS (otkucaj live: minutni krug krece i zavrsava svaki minut, ~35s; 11:00-11:52 hidro tisina bila lazina uzbuna - write-on-change; prave rupe ostaju nocne 00-08h, prati se nocas)

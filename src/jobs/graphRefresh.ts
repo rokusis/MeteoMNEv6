@@ -8,6 +8,20 @@ import { saveSourceStatus } from '../db';
 // 10 po krugu zbog CPU limita (mejl 1000+ prekrsaja); rep je ~5 min.
 // Validirano simulacijom: nema gladovanja, nula promasaja.
 export const GRAPH_REFRESH_LIMIT = 10;
+// Merac kasnjenja repa: pise se samo kad pokrivanje snimka kasni preko granice.
+// Po pravilu svezine granica je 3 minuta; tisina znaci da rep stize na vreme.
+export const GRAPH_LAG_LIMIT_MIN = 3;
+export function graphLagMin(nowMs: number, snapMs: number | null): number | null {
+  if (snapMs == null) return null;
+  return Math.round(((nowMs - snapMs) / 60000) * 10) / 10;
+}
+async function logGraphLag(db: D1Database, stationId: string, lagMin: number, snapshotRaw: string | null): Promise<void> {
+  try {
+    await db.prepare(
+      `INSERT INTO graph_lag_log (checked_at, station_id, lag_min, snapshot_raw) VALUES (?, ?, ?, ?)`,
+    ).bind(new Date().toISOString(), stationId, lagMin, snapshotRaw).run();
+  } catch {}
+}
 // Vremenski budzet kruga: stanemo na vreme, ostatak ide sledeci minut.
 // Bez ovoga prvo punjenje (cela istorija odjednom) ubije krug timeout-om.
 const TICK_BUDGET_MS = 20000;
@@ -137,7 +151,13 @@ export async function refreshDueGraphs(db: D1Database, nowMs: number = Date.now(
       if (stopped) break;
         const nx = nextStateOnResult(d, nowMs, changed, snapMs ?? d.lastSnapshotMs);
         await saveState(db, nx);
-        if (changed) updated++;
+        if (changed) {
+          updated++;
+          const lag = graphLagMin(nowMs, snapMs ?? d.lastSnapshotMs);
+          if (lag != null && lag > GRAPH_LAG_LIMIT_MIN) {
+            await logGraphLag(db, d.stationId, lag, snapshots.find((s) => s.stationId === d.stationId)?.measuredAtRaw ?? null);
+          }
+        }
       } catch {
         const snapMs = parseSnapshotMs(snapshots.find((s) => s.stationId === d.stationId)?.measuredAtRaw ?? null);
         const nx = nextStateOnResult(d, nowMs, false, snapMs ?? d.lastSnapshotMs);

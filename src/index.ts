@@ -354,6 +354,13 @@ export default {
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
+      if (url.pathname === '/api/graph-lag') {
+        try {
+          if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
+          const {results} = await env.DB.prepare(`SELECT checked_at, station_id, lag_min, snapshot_raw FROM graph_lag_log ORDER BY checked_at DESC LIMIT 100`).all();
+          return Response.json({ status:'ok', count: results.length, logs: results });
+        } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
       if (url.pathname === '/api/numerical-status') {
         try {
           if (!env.DB) return Response.json({ status:'error', message:'no DB' }, {status:500});
