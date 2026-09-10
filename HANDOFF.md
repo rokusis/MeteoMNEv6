@@ -115,27 +115,48 @@ u svojoj bazi, i da podaci iz njegove baze ne kasne vise od 2-3 minuta za
 najsvezijim na meteo.co.me. Razlog: pravi sopstveni prikaz na frontendu iz
 svoje baze, i taj prikaz ne sme da kasni vise od 2-3 minuta.
 
-## Retrospektiva sesije (kako se doslo dovde)
+## Retrospektiva sesije (kako se doslo dovde — sa pogresnim putevima)
 
 - Pocetak: kontekst izgubljen (700k tokena potroseno, model promenjen,
-  greska providera). Vracen preko JSON eksporta razgovora iz repoa.
-  Pouka: repo je memorija, ne chat.
-- Era nagađanja uzivo: krug "deploy, cekaj 15 minuta, greska" se vrtela danima.
-  Prekinuta prelaskom na simulaciju pravim podacima (gladovanje nadjeno za
-  par sekundi) + pravi typecheck lokalno + citanje tacnih gresaka iz
-  annotations API-ja. Pravilo od tada: prvo dokaz lokalno, pa zivo.
-- Vlasnik je korigovao pravac vise puta i svaka korekcija je postala pravilo:
-  odgovor na pogresnom jeziku; krpljenje bez citanja greske; lepljenje komandi
-  bez objasnjenja; prozori umesto dogadjaja; nagadjanje porekla obrazaca
-  (trazio dokaz iz tabele); " Uhvacena rupa u reviewer promptu; TASKS trulez.
-- Kljucne prekretnice: vremenska zona (snimci su lokalni); gladovanje u redu
-  (sveze pre ponavljanja); prvo punjenje ubija krug (budzet+kap+kursor);
-  otisak po stanici umesto celog bulka (kvota); strujni prekidac pisce;
-  ivicni kes; auto CI+deploy+migracije; /api/health cuvar.
+  greska providera). Vracen preko JSON eksporta razgovora iz repoa
+  (11 MB, 999 poruka). Pouka: repo je memorija, ne chat (DEC-017 vazi).
+- Era nagadjanja uzivo: krug "deploy, cekaj 15 minuta, greska" se vrteo danima.
+  Prekinut prelaskom na: simulaciju pravim snimcima, pravi tsc lokalno
+  (tscheck/), citanje tacnih gresaka iz check-runs annotations API-ja
+  (log zip trazi admin). Pravilo od tada: prvo dokaz lokalno, pa zivo.
+- Pogresan put 1 (prozori): fiksni polling 8-12 min za grafike. Greska: prozor
+  sam garantuje lag (sim: 10-14 min). Zamena: okidac je pomeren snimak
+  (DEC-027). Dokaz: sim max ~3 min + Podgorica sva polja sveza uzivo.
+- Pogresan put 2 (vremenska zona): snimci citani kao UTC. Greska: sistemska
+  2h greska, stanice nikad zrele (samo Kovren sa starim snimkom prolazio).
+  Dokaz: fetchedAt 19:55 UTC vs snimak 21:40 — iz buducnosti je nemoguce,
+  dakle lokalno. Zamena: DST ofset u parseru + letnji/zimski test.
+- Pogresan put 3 (red po starosti): retry stanice bez novih podataka jele
+  slotove (BIST20/BOAN30), Podgorica gladovala. Zamena: sveze pre ponavljanja
+  + parkiranje (miss cap) + budjenje novim snimkom.
+- Pogresan put 4 (prvo punjenje): cela istorija odjednom red-po-red ubijala
+  krug timeout-om; Podgorica nikad nije dobila ni red (dokazano: c=1 samo
+  Kovren). Zamena: samo-nove-tacke + kap 500 + budzet 20s + kursori + budzet
+  i usred stanice.
+- Pogresan put 5 (otisak celog bulka): jedna promena sirila upis na svih 37
+  (dashboard dokaz: 42.5k + 23k redova, kvota probijena). Zamena: otisak po
+  stanici (a1c0b3e).
+- CPU mejl (1000+ proboja): odgovor dijeta — grupni upisi (db.batch sa
+  fallbackom), krug 20->10 (sim rep ~5 min), ruta sa kapom. Presuda po mejlu.
+- Kvota D1 probijena (101k, blokada do 2026-09-10 00:00 UTC): lekcije su
+  tacke iznad; strujni prekidac pisce napisan ceka sledeci proboj.
+- Vlasnik je korigovao pravac i svaka korekcija je postala pravilo: odgovor
+  na pogresnom jeziku; krpljenje bez citanja greske; lepljenje komandi bez
+  objasnjenja i bez opisa uradjenog; nagadjanje porekla obrazaca (trazio dokaz
+  iz numerical_log tabele — e3km ~09:30 potvrdjen 5. dan); uhvacena rupa u
+  reviewer promptu (nedostajala provera uskladjenosti); TASKS trulez.
 - Odbacene alternative (sa razlogom, ne napamet): dva Cloudflare naloga
   (siva zona pravila, dupli kvarovi, sporiji frontend); drugi besplatni
   servisi (spavaju, nemaju minutni kron, odrzavanje); placanje 5$ (rezerva,
   odluka tek posle brojki); odvajanje probne stranice u fajl (rizik verzija).
 - Saradnja prerasla u: agent radi samostalno ovde (push prava, repo-scoped
-  token), vlasnik samo cita sajt i javlja mejlove; gradja se proverava
-  javnim endpointima bez kljuca.
+  token 30 dana), vlasnik samo cita sajt i javlja mejlove; gradja se proverava
+  javnim endpointima bez kljuca; rucni deploy/migracije zamenjeni auto
+  workflowom (d1_migrations bazelajn 16).
+- Puna prica po tackama: commit poruke u git logu, REVIEW-027..033,
+  ZHMS odeljak 25, DEC-026..036, testovi kao izvrsna specifikacija ponasanja.
