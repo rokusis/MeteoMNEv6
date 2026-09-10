@@ -1,4 +1,4 @@
-import { fetchHydroLive } from '../sources/hydro/liveHydro';
+import { fetchHydroLive, saveHydro } from '../sources/hydro/liveHydro';
 import { hydroFingerprint } from './hydroLogger';
 
 // Gusta straza za hidrologiju: promene su u svim satima (00,01,08,12,13,
@@ -33,6 +33,13 @@ export async function runHydroTick(db: D1Database, nowMs: number): Promise<{ che
         .prepare(`INSERT INTO hydro_log (checked_at, status, fingerprint, station_count) VALUES (?, ?, ?, ?)`)
         .bind(now, status, fp.slice(0, 4000), r.observations.length)
         .run();
+    }
+    // Straza je videla promenu: odmah osvezi i kes za serviranje da korisnik
+    // ne ceka 10-minutni krug. Retko se desava, jeftino je, guard je u saveHydro.
+    if (changed) {
+      try {
+        await saveHydro(db, r.stations, r.observations);
+      } catch {}
     }
     return { checked: true, changed };
   } catch (e: any) {

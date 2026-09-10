@@ -1,4 +1,4 @@
-import { fetchSeaSnowLive } from '../sources/zhms-sea-snow/liveSeaSnow';
+import { fetchSeaSnowLive, saveSeaSnow } from '../sources/zhms-sea-snow/liveSeaSnow';
 import { seaSnowFingerprint } from './seaSnowLogger';
 
 // Gusta straza za more/sneg: provera na svaka 2 minuta ceo dan.
@@ -34,6 +34,13 @@ export async function runSeaSnowTick(db: D1Database, nowMs: number): Promise<{ c
         .prepare(`INSERT INTO sea_snow_log (checked_at, status, fingerprint, sea_count, snow_count) VALUES (?, ?, ?, ?, ?)`)
         .bind(now, status, fp.slice(0, 4000), r.sea.length, r.snow.length)
         .run();
+    }
+    // Straza je videla promenu: odmah osvezi i kes za serviranje da korisnik
+    // ne ceka 10-minutni krug. Retko se desava, jeftino je, guard je u saveSeaSnow.
+    if (changed) {
+      try {
+        await saveSeaSnow(db, r.sea, r.snow);
+      } catch {}
     }
     return { checked: true, changed };
   } catch (e: any) {

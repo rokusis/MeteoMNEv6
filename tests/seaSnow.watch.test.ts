@@ -8,12 +8,15 @@ const T = (h: number, m: number) => Date.UTC(2026, 8, 9, h, m, 0);
 
 function fakeDb() {
   const rows: any[] = [];
+  const cacheWrites: any[] = [];
   return {
     rows,
+    cacheWrites,
     prepare: (_sql: string) => ({
       bind: (...a: any[]) => ({
         run: async () => {
-          rows.push({ checked_at: a[0], status: a[1], fingerprint: a[2], sea_count: a[3], snow_count: a[4] });
+          if (_sql.includes('sea_snow_log')) rows.push({ checked_at: a[0], status: a[1], fingerprint: a[2], sea_count: a[3], snow_count: a[4] });
+          else if (_sql.includes('INTO ')) cacheWrites.push(_sql.slice(0, 30));
         },
         first: async () => (rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null),
         all: async () => ({ results: rows }),
@@ -61,5 +64,7 @@ describe('more/sneg gusta straza', () => {
     const r4 = await runSeaSnowTick(db, T(9, 2));
     expect(r4).toEqual({ checked: true, changed: true });
     expect(db.rows[2].status).toBe('changed');
+    // promena odmah osvezava i kes za serviranje
+    expect(db.cacheWrites.length).toBeGreaterThan(0);
   });
 });

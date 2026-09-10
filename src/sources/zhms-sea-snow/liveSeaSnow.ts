@@ -9,11 +9,13 @@ export async function fetchSeaSnowLive(): Promise<{ sea: any[]; snow: any[] }> {
   const res = await zhmsFetch(URL);
   const html = await res.text();
   const { sea, snow } = parseSeaSnow(html);
+  if (!sea.length && !snow.length) throw new Error('sea-snow empty');
   cache = { sea, snow, fetchedAt: new Date().toISOString() };
   return { sea, snow };
 }
 
 export async function saveSeaSnow(db: D1Database, sea: any[], snow: any[]): Promise<void> {
+  if (!sea.length && !snow.length) return;
   await db.prepare(
     `INSERT INTO sea_snow_cache (id, fetched_at, payload)
      VALUES (1, ?, ?)
@@ -33,21 +35,41 @@ export async function loadSeaSnow(db: D1Database): Promise<{ sea: any[]; snow: a
   }
 }
 
-// Otisak za stednju upisa: kes se prepise samo kad se nesto promenilo.
-// More se menja ~1 dnevno, slep prepis na 10 min je cisto bacanje upisa.
-let lastSeaSnowPersistFp: string | null = null;
-function seaSnowPersistFp(sea: any[], snow: any[]): string {
+// DEC-006 zadnje-dobro: kes se prepise samo punim ili vecim skupom.
+// Prazan ili okrnjen skup ne sme da obrise dobar kes (isti guard kao SYNOP).
+// Provera ide iz baze (radi preko izolata), ne iz memorije.
+function seaSnowSetFp(sea: any[], snow: any[]): string {
   const s = (sea ?? []).map((x: any) => `${x.place}|${x.tempC}|${x.timeRaw}`).sort().join(';');
   const n = (snow ?? []).map((x: any) => `${x.place}|${x.heightCm}|${x.timeRaw}`).sort().join(';');
   return s + '#' + n;
 }
 
+function seaSnowCount(sea: any[], snow: any[]): number {
+  return (sea ?? []).length + (snow ?? []).length;
+}
+
+export function shouldPersistSeaSnow(
+  prev: { sea: any[]; snow: any[] } | null,
+  sea: any[],
+  snow: any[],
+): boolean {
+  if (seaSnowCount(sea, snow) === 0) return false;
+  if (!prev || seaSnowCount(prev.sea, prev.snow) === 0) return true;
+  if (seaSnowCount(sea, snow) < seaSnowCount(prev.sea, prev.snow)) return false;
+  if (seaSnowCount(sea, snow) === seaSnowCount(prev.sea, prev.snow)) {
+    return seaSnowSetFp(sea, snow) !== seaSnowSetFp(prev.sea, prev.snow);
+  }
+  return true;
+}
+
 // Za kron na 10 min: more/sneg se menjaju retko, upis je jedan mali red.
 export async function refreshSeaSnow(db: D1Database): Promise<{ updated: boolean }> {
   const r = await fetchSeaSnowLive();
-  const fp = seaSnowPersistFp(r.sea, r.snow);
-  if (fp !== lastSeaSnowPersistFp) {
-    lastSeaSnowPersistFp = fp;
+  let prev: { sea: any[]; snow: any[] } | null = null;
+  try {
+    prev = await loadSeaSnow(db);
+  } catch {}
+  if (shouldPersistSeaSnow(prev, r.sea, r.snow)) {
     await saveSeaSnow(db, r.sea, r.snow);
   }
   return { updated: r.sea.length + r.snow.length > 0 };
@@ -63,7 +85,12 @@ export async function getSeaSnow(db?: D1Database | null): Promise<{ sea: any[]; 
   try {
     const r = await fetchSeaSnowLive();
     if (db) {
-      try { await saveSeaSnow(db, r.sea, r.snow); } catch {}
+      try {
+        const prev = await loadSeaSnow(db);
+        if (shouldPersistSeaSnow(prev, r.sea, r.snow)) {
+          await saveSeaSnow(db, r.sea, r.snow);
+        }
+      } catch {}
     }
     return { ...r, fromCache: false, fetchedAt: cache!.fetchedAt };
   } catch (e) {

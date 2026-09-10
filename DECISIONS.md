@@ -493,3 +493,18 @@ Blind live iteration (deploy, wait 15 min, fail) burned days. Simulation reprodu
 Consequence:
 No deploy without green local sim/typecheck/logic checks plus CI.
 Date: 2026-09-08
+
+---
+
+# DEC-036 — Always-dense guards supersede fixed windows
+
+Decision:
+Hydro, official, sea/snow and numerical checks run every 2 minutes around the clock. The DEC-030 numerical windows are retired as check gates (kept only as diagnostic knowledge); DEC-031 SYNOP windows stay because that source is term-bound.
+
+Why:
+A window guarantees lag up to the off-window gap, and editions arrive outside measured windows (e3km at 11:25 local vs 10:30 window close), which left a full day stale with no trace. Dense checks cost ~1 small GET each (numerical 304s carry no body) - negligible next to graph bursts.
+
+Consequence:
+Freshness rule is relative (owner 2026-09-10): 2-3 min goal for all sources; windows may gate checks only as a conscious load tradeoff, never silently. Serving caches keep previous-known-good and never overwrite with empty or smaller sets.
+
+Date: 2026-09-10
