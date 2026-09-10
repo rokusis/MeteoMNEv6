@@ -33,10 +33,23 @@ export async function loadSeaSnow(db: D1Database): Promise<{ sea: any[]; snow: a
   }
 }
 
+// Otisak za stednju upisa: kes se prepise samo kad se nesto promenilo.
+// More se menja ~1 dnevno, slep prepis na 10 min je cisto bacanje upisa.
+let lastSeaSnowPersistFp: string | null = null;
+function seaSnowPersistFp(sea: any[], snow: any[]): string {
+  const s = (sea ?? []).map((x: any) => `${x.place}|${x.tempC}|${x.timeRaw}`).sort().join(';');
+  const n = (snow ?? []).map((x: any) => `${x.place}|${x.heightCm}|${x.timeRaw}`).sort().join(';');
+  return s + '#' + n;
+}
+
 // Za kron na 10 min: more/sneg se menjaju retko, upis je jedan mali red.
 export async function refreshSeaSnow(db: D1Database): Promise<{ updated: boolean }> {
   const r = await fetchSeaSnowLive();
-  await saveSeaSnow(db, r.sea, r.snow);
+  const fp = seaSnowPersistFp(r.sea, r.snow);
+  if (fp !== lastSeaSnowPersistFp) {
+    lastSeaSnowPersistFp = fp;
+    await saveSeaSnow(db, r.sea, r.snow);
+  }
   return { updated: r.sea.length + r.snow.length > 0 };
 }
 

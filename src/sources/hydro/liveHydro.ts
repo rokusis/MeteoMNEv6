@@ -35,10 +35,27 @@ export async function loadHydro(db: D1Database): Promise<{ stations: any[]; obse
   }
 }
 
+// Otisak za stednju upisa: kes se prepise samo kad se nesto promenilo.
+// Dnevni limit D1 upisa je 100k, a slep prepis svih stanica na 10 min trosi hiljade.
+let lastHydroPersistFp: string | null = null;
+function hydroPersistFp(stations: any[], observations: any[]): string {
+  return (
+    observations
+      .map((o: any) => `${o.stationId}|${o.measuredAtRaw}|${o.waterLevelCm}|${o.waterTempC}`)
+      .sort()
+      .join(';') + '#' + stations.length
+  );
+}
+
 // Za kron na 10 min: reke se menjaju sporo, upis je jedan mali red.
 export async function refreshHydro(db: D1Database): Promise<{ updated: boolean }> {
-  const r = await fetchHydroLive(db);
-  await saveHydro(db, r.stations, r.observations);
+  const r = await fetchHydroLive();
+  const fp = hydroPersistFp(r.stations, r.observations);
+  if (fp !== lastHydroPersistFp) {
+    lastHydroPersistFp = fp;
+    await saveStations(db, r.stations as any);
+    await saveHydro(db, r.stations, r.observations);
+  }
   return { updated: r.observations.length > 0 };
 }
 

@@ -238,14 +238,14 @@ export default {
           const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
           if (env.DB) await refreshSeaSnow(env.DB as any);
         } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
-        try {
-          const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
-          if (env.DB) await refreshSeaSnow(env.DB as any);
-        } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
       }
+      // Kraj kruga na uzorku (10-minutni uvek, minutni svaki deseti minut):
+      // pocetak svakog kruga se belezi uvek, a ovime se stedi D1 limit.
       try {
-        const { markTickEnd } = await import('./lib/tick');
-        await markTickEnd(env.DB, tickSource);
+        if (tickSource === 'tick-10min' || new Date().getUTCMinutes() % 10 === 0) {
+          const { markTickEnd } = await import('./lib/tick');
+          await markTickEnd(env.DB, tickSource);
+        }
       } catch {}
     } catch(e){ console.error('cron error', e); }
   },
