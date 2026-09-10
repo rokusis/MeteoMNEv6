@@ -104,3 +104,38 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Prazna baza se sama pokrece (seed pending) — provereno testom.
 - Upisivac kesa mora guard kompletnosti (ne prepisuj manje preko veceg).
 - Module-level `let` ne vazi preko Worker izolata (otisci moraju u D1).
+
+## Cilj vlasnika (njegovim recima sredjeno)
+
+Vlasnik ciljano uzima podatke sa meteo.co.me: temperaturu, vlaznost, vetar,
+pritisak, padavine, udar vetra, insolaciju, zvanicnu i racunarsku prognozu,
+temperaturu mora, sneg, reke, plus spisak stanica sa visinama i koordinatama
+za kartu. Trazi najpametniji nacin da izvor ne opterecuje previse, sve drzi
+u svojoj bazi, i da podaci iz njegove baze ne kasne vise od 2-3 minuta za
+najsvezijim na meteo.co.me. Razlog: pravi sopstveni prikaz na frontendu iz
+svoje baze, i taj prikaz ne sme da kasni vise od 2-3 minuta.
+
+## Retrospektiva sesije (kako se doslo dovde)
+
+- Pocetak: kontekst izgubljen (700k tokena potroseno, model promenjen,
+  greska providera). Vracen preko JSON eksporta razgovora iz repoa.
+  Pouka: repo je memorija, ne chat.
+- Era nagađanja uzivo: krug "deploy, cekaj 15 minuta, greska" se vrtela danima.
+  Prekinuta prelaskom na simulaciju pravim podacima (gladovanje nadjeno za
+  par sekundi) + pravi typecheck lokalno + citanje tacnih gresaka iz
+  annotations API-ja. Pravilo od tada: prvo dokaz lokalno, pa zivo.
+- Vlasnik je korigovao pravac vise puta i svaka korekcija je postala pravilo:
+  odgovor na pogresnom jeziku; krpljenje bez citanja greske; lepljenje komandi
+  bez objasnjenja; prozori umesto dogadjaja; nagadjanje porekla obrazaca
+  (trazio dokaz iz tabele); " Uhvacena rupa u reviewer promptu; TASKS trulez.
+- Kljucne prekretnice: vremenska zona (snimci su lokalni); gladovanje u redu
+  (sveze pre ponavljanja); prvo punjenje ubija krug (budzet+kap+kursor);
+  otisak po stanici umesto celog bulka (kvota); strujni prekidac pisce;
+  ivicni kes; auto CI+deploy+migracije; /api/health cuvar.
+- Odbacene alternative (sa razlogom, ne napamet): dva Cloudflare naloga
+  (siva zona pravila, dupli kvarovi, sporiji frontend); drugi besplatni
+  servisi (spavaju, nemaju minutni kron, odrzavanje); placanje 5$ (rezerva,
+  odluka tek posle brojki); odvajanje probne stranice u fajl (rizik verzija).
+- Saradnja prerasla u: agent radi samostalno ovde (push prava, repo-scoped
+  token), vlasnik samo cita sajt i javlja mejlove; gradja se proverava
+  javnim endpointima bez kljuca.
