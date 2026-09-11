@@ -104,6 +104,10 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Prazna baza se sama pokrece (seed pending) — provereno testom.
 - Upisivac kesa mora guard kompletnosti (ne prepisuj manje preko veceg).
 - Module-level `let` ne vazi preko Worker izolata (otisci moraju u D1).
+- Agentmemory: upisi se potvrdjuju (vracaju ID) ali recall/smart_search ne
+  vracaju nista cak ni u istoj sesiji (provereno 2026-09-10 sa oba puta).
+  Jedina proverena zajednicka memorija je ovaj repo. Ne oslanjati se na
+  agentmemory za handoff dok se citanje ne dokaze unakrsno izmedju agenata.
 
 ## Cilj vlasnika (njegovim recima sredjeno)
 
