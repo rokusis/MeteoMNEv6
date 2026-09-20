@@ -3,12 +3,22 @@ import type { NormalizedObservation } from './sources/zhms-aws/normalize';
 
 export async function saveStations(db: D1Database, stations: Station[]): Promise<void> {
   const now = new Date().toISOString();
-  for (const s of stations) {
+  for (const s of stations as any[]) {
+    // AWS oblik: stationId/latitude/longitude, hidro oblik: id/lat/lon.
+    // Prazno se pretvara u null jer D1 ne prima undefined (greska vidjena
+    // 20.09: hydro svaki 10-minutni krug pucao na undefined).
+    const sid = s.stationId ?? s.id ?? null;
+    if (sid == null || String(sid).trim() === '') continue;
+    const nm = s.name ?? null;
+    const lat = s.latitude ?? s.lat ?? null;
+    const lon = s.longitude ?? s.lon ?? null;
+    const latNum = lat === '' || lat == null || Number.isNaN(Number(lat)) ? null : Number(lat);
+    const lonNum = lon === '' || lon == null || Number.isNaN(Number(lon)) ? null : Number(lon);
     await db.prepare(
       `INSERT INTO stations (station_id, wmo_id, name, latitude, longitude, elevation, station_type, river, is_active, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(station_id) DO UPDATE SET wmo_id=excluded.wmo_id, name=excluded.name, latitude=excluded.latitude, longitude=excluded.longitude, elevation=excluded.elevation, station_type=excluded.station_type, river=excluded.river, is_active=excluded.is_active, updated_at=excluded.updated_at`
-    ).bind(s.stationId, (s as any).wmoId ?? null, s.name, s.latitude, s.longitude, s.elevation ?? null, (s as any).stationType ?? s.stationType ?? null, (s as any).river ?? null, s.statusFlag === 1 || s.statusFlag === '1' || (s as any).flag === 1 ? 1 : 0, now).run();
+    ).bind(String(sid).trim(), (s as any).wmoId ?? null, nm, latNum, lonNum, (s as any).elevation ?? null, (s as any).stationType ?? s.stationType ?? null, (s as any).river ?? null, s.statusFlag === 1 || s.statusFlag === '1' || (s as any).flag === 1 ? 1 : 0, now).run();
   }
 }
 
