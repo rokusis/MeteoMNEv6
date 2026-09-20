@@ -508,3 +508,51 @@ Consequence:
 Freshness rule is relative (owner 2026-09-10): 2-3 min goal for all sources; windows may gate checks only as a conscious load tradeoff, never silently. Serving caches keep previous-known-good and never overwrite with empty or smaller sets.
 
 Date: 2026-09-10
+
+---
+
+# DEC-037 — Numerical logger writes on change only
+
+Decision:
+The 10-minute numerical sentinel inserts into numerical_log only on change/error plus an hourly heartbeat, instead of every run.
+
+Why:
+It wrote 2 rows every 10 minutes even when nothing changed (~288/day) while patterns were already captured (4715 rows 04-20.09).
+
+Consequence:
+~50 rows/day. Tables stay as trace, /api/numerical-log still reads history. Liveness proven by heartbeat.
+
+Date: 2026-09-20
+Proof: commit 66d022b, CI+Deploy green, live health ok.
+
+---
+
+# DEC-038 — Station writes accept both shapes, skip coord-less points
+
+Decision:
+saveStations accepts AWS shape (stationId/latitude/longitude) and hydro shape (id/lat/lon); undefined becomes null; a point without coordinates is skipped from the shared stations table while its water data keeps flowing through hydro_cache.
+
+Why:
+Hydro stations carry id/lat/lon, so every 10-minute refresh died with D1_TYPE_ERROR; after the first fix the coord-less Bojana (desni-rukavac, 10BODR10, confirmed empty on source) hit the NOT NULL latitude constraint. Missing is not zero — a zero would draw a false map point.
+
+Consequence:
+No template backend assumptions: any future coord-less station is handled the same way without a new bug. Water level/temperature serving unaffected.
+
+Date: 2026-09-20
+Proof: commits 2a97fea + 19dd01f, CI+Deploy green.
+
+---
+
+# DEC-039 — Lighter tick: graphs 5 per minute, numerical tours 2 cities
+
+Decision:
+GRAPH_REFRESH_LIMIT 10 -> 5 per minute; numerical tour batch 3 -> 2 cities. Fresh-first ordering unchanged.
+
+Why:
+The 1-minute tick died mid-run (tick-minute success stale since 15:00 while starts fresh every minute; synop logged too-many-subrequests). Over 30 upstream questions plus parses per minute exceeded CPU/subrequest budget (1000+ CPU mails).
+
+Consequence:
+Queue drains slower (~8 min full drain) but moved snapshots go first so the 2-3 min freshness goal holds; graph-lag meter proves it live, revert to 10 on any >3 min breach. Tests updated to the new budget.
+
+Date: 2026-09-20
+Proof: commits 22503e0 + d318ed6, CI+Deploy green, live health all ok.

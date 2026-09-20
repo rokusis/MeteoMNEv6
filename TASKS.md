@@ -580,7 +580,7 @@ Status: DONE (2026-09-06, sim max lag ~3 min, live Podgorica fresh)
 Status: DONE (bulk + writers persist on change only)
 
 ## TASK-152 — 1-minute tick with budgets and cursors
-Status: DONE (limit 10, 20s budget, resume; subrequest guard)
+Status: DONE (limit 5 since 2026-09-20, was 10; 20s budget, resume; subrequest guard; DEC-039)
 
 ## TASK-153 — Numerical windows and cursor batches
 Status: DONE (e3km 09:00-10:30, a3km 06:00-13:00; full-pull retired)
@@ -598,13 +598,13 @@ Status: DONE (zero manual commands per change)
 Status: DONE (per-source age, ok/stale/unknown)
 
 ## TASK-158 — 48h measurement loggers (official/hydro/sea/air)
-Status: IN PROGRESS (collecting; air/EPA merac dodat 2026-09-09, reading ~2026-09-11)
+Status: DONE COLLECTING (official 345 rows 07-20.09, hydro 193, sea 145, numerical 4715 rows 04-20.09, air 36 rows only 09.09; listeners did their job, switch-off pending; air/EPA decision pending with owner)
 
 ## TASK-159 — 48h pattern reading and windows
-Status: IN PROGRESS (official+hidro+more/sneg+numericka gusta straza live 2026-09-09, sentineli ugaseni; graph lag merac live, citanje za dan-dva; air citanje ~2026-09-11)
+Status: DONE READING 2026-09-20 (official day-only 05-19 local, hydro changes almost every check, sea every 1-2 days, numerical a3km ~08:50 + e3km ~11:30 local daily; air stale since 09.09; windows implementation pending)
 
 ## TASK-160 — CPU diet verdict
-Status: IN PROGRESS (otkucaj live: minutni krug krece i zavrsava svaki minut, ~35s; 11:00-11:52 hidro tisina bila lazina uzbuna - write-on-change; prave rupe ostaju nocne 00-08h, prati se nocas)
+Status: IN PROGRESS (numerical logger write-on-change 66d022b; saveStations dual-shape 2a97fea + coord-less skip 19dd01f; tick diet 5/2 22503e0+d318ed6; live health all ok 20.09; night-sparse + email watch next)
 
 ## TASK-161 — Reviewer first use
 Status: TODO (prompt ready per DEC-034)
@@ -613,10 +613,11 @@ Status: TODO (prompt ready per DEC-034)
 
 # CURRENT NEXT TASK
 
-Live tracker: HANDOFF.md (open items). As of 2026-09-08:
+Live tracker: HANDOFF.md (open items). As of 2026-09-20:
 
-1. Morning numerical re-proof after 10h (windows live).
-2. CPU diet verdict from daily limit email.
-3. 48h pattern readings (official/hydro/sea) ~2026-09-10, then windows.
-4. First reviewer use on next risky change.
+1. Listener switch-off (keep cache refresh, stop log spam) + night-sparse per pattern.
+2. Email watch 2-3 days: D1 79% (reset 16.09) + CPU 1000+ verdict.
+3. Owner decision: air (EPA) in or out, then EPA page fix (no var points).
+4. First reviewer use on next risky change (prompt ready per DEC-034).
 5. TASK-121 schema change detection (real gap, unscheduled).
+6. Frontend only when backend stable.

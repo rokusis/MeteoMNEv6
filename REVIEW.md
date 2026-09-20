@@ -341,3 +341,21 @@ Scope: edgeCache za /api rute, dijagnostika van kesa
 Commit: 9760f3d / 1f19ea1
 Findings: cache-control public max-age 60 dokazan uzivo; API 0.21s -> 0.067s; CI success nakon this-skop popravke
 Result: PASS
+
+---
+## REVIEW-034 — numericki merac dijeta + hidro cuvanje
+Date: 2026-09-20
+Reviewer: AI agent + vlasnik (direktno, drugi agent ne radi)
+Scope: numericalLogger write-on-change (DEC-037), saveStations dual-shape + skip bez koordinata (DEC-038)
+Commit: 66d022b / 2a97fea / 19dd01f
+Findings: merac ~288/dan na ~50/dan; Bojana 10BODR10 bez koordinata potvrdjena na izvoru i drugim modelom; voda ide kroz kes; CI+Deploy success; zdravlje zeleno
+Result: PASS
+
+---
+## REVIEW-035 — dijeta kruga 5/2
+Date: 2026-09-20
+Reviewer: AI agent + vlasnik (direktno)
+Scope: grafici 10->5 po minutu, ture 3->2 grada (DEC-039), test uskladjen
+Commit: 22503e0 / d318ed6
+Findings: prvo CI pao na testu starog broja (ocekivano), popravljen test; posle CI+Deploy success; zdravlje zeleno svuda, kasnjenje 2-3 min stoji
+Result: PASS

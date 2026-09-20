@@ -395,9 +395,10 @@ The frontend consumes these normalized endpoints.
 
 One 1-minute combined tick (bulk, then graphs, then synop watch, then
 numerical batches) plus one 10-minute tick (loggers and slow writers).
-Graphs trigger on moved snapshots with per-tick budgets and resume
-cursors. SYNOP watches densely around 07/14/21 terms. Numerical follows
-measured windows with cursor batches. See DEC-027, DEC-030, DEC-031.
+Graphs trigger on moved snapshots with per-tick budgets (5 per tick since
+2026-09-20, was 10) and resume cursors. Numerical tours run 2 cities per
+tick (was 3). SYNOP watches densely around 07/14/21 terms. Numerical follows
+measured windows with cursor batches. See DEC-027, DEC-030, DEC-031, DEC-039.
 
 Previous concept kept below for history:
 

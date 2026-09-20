@@ -1,9 +1,35 @@
 # HANDOFF — stanje projekta MeteoMNEv6
 
-Datum: 2026-09-10. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
+Datum: 2026-09-10, dopuna 2026-09-20. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
 bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
-(026-036), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
+(026-039), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
 (faza 15), pa ovaj fajl. Ovaj fajl se obnavlja posle svake vece promene.
+
+## Dopuna 2026-09-20 (novi agent, drugi agent ne radi)
+
+- Drugi paralelni agent ne radi od 16.09. Ostao samo ovaj agent sa vlasnikom.
+  Odeljak "VAZNO: radi i drugi agent paralelno" ispod vise ne vazi.
+- Radna kopija je sad `C:\Users\ADMINI~1\AppData\Local\Temp\opencode\fresh-MeteoMNEv6`
+  (stara pokidana preimenovana u `MeteoMNEv6-pokvareno`, .git bez HEAD/config).
+  Public klon + push pravo radi (provereno fetch+push). Cloudflare citanje radi
+  preko masinskih promenljivih (posle restarta opencode), deploy ide sam preko
+  GitHub Secrets (provereno zeleno).
+- Agentmemory citanje od 19.09 ponovo radi (recall/smart_search vracaju).
+  Upozorenje od 11.09 (commit 2092f7c) vise ne vazi, repo ostaje glavna memorija.
+- Pokusaj treceg agenta od 16.09 (gasenje numerickog meraca u radnoj kopiji,
+  neposlato) je odbacen. Vracen fajl na 11.09. Nastavlja se od HANDOFF 10.09.
+- Uradjeno 20.09, sve CI+Deploy zeleno, zdravlje zeleno: 66d022b numericki
+  merac samo na promenu (~288/dan na ~50/dan); 2a97fea+19dd01f cuvanje razume
+  hidro oblik i preskace tacku bez koordinata (Bojana desni-rukavac 10BODR10,
+  potvrdjeno prazno na izvoru); 22503e0+d318ed6 dijeta kruga 10->5 po minutu,
+  ture 3->2 grada (sveze prvo, kasnjenje 2-3 min ostaje).
+- Obrazac izmeren iz pune baze (07-20.09, vise od 48h): zvanicna 345 zapisa,
+  samo danju 05-19; reke 193 zapisa, promene skoro svaki put; more 145 zapisa,
+  na dan-dva; racunarska 4715 zapisa od 04.09, novo svaki dan a3km ~08:50 i
+  e3km ~11:30; vazduh 36 zapisa samo 09.09 (merac nije vezan u krug + strana
+  nema vise var points). Odluka vlasnika za vazduh ceka.
+- Otvoreno: gasenje slusaca (kes ostaje), nocni redji ritam, presuda mejlova
+  (D1 79% reset 16.09 + CPU 1000+ od 13.09), pa frontend tek kad stabilno.
 
 ## Vlasnik: ko je i kako se radi s njim (obavezno)
 
@@ -24,14 +50,16 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 
 ## Kako se radi (okruzenje, prava, proces)
 
-- Radna kopija OVDE: `C:\Users\ADMINI~1\AppData\Local\Temp\opencode\MeteoMNEv6`
-  (pl taki klon na Windows masini vlasnika). Push ide direktno odavde.
-- GitHub token (repo-scoped, 30 dana od 2026-09-08) stoji SAMO u remote URL-u
-  tog klona. Revoke + brisanje kad vlasnik kaze. Vazi jos ~28 dana.
+- Radna kopija OVDE: `C:\Users\ADMINI~1\AppData\Local\Temp\opencode\fresh-MeteoMNEv6`
+  (svez klon na Windows masini vlasnika, 20.09, head d318ed6). Push ide direktno odavde.
+- GitHub token (repo-scoped) stoji SAMO u remote URL-u tog klona + trajno u
+  masinskim promenljivama za Cloudflare (nikad u chat). Revoke + brisanje kad vlasnik kaze.
 - Codespace (`/workspaces/MeteoMNEv6`) se ne koristi za kod. Pre bilo kakvog
   rada tamo obavezan `git pull`. Pazi: lepljenje komandi u editor pravi djubre
   po fajlovima (vidjeno u src/index.ts) + `nul` fajl od `curl -o nul` brisati.
-- Cloudflare token ima SAMO vlasnik (D1 upiti, rucni deploy u rezervi).
+- Cloudflare pristup ima agent lokalno (citanje pune baze provereno 20.09),
+  deploy ide sam preko GitHub Secrets (CLOUDFLARE_API_TOKEN + ACCOUNT_ID).
+  Rucni deploy/migracije u rezervi zna samo vlasnik.
 - Auto CI + auto deploy + auto migracije su zivi (`.github/workflows/`).
   Migracije 0001-0016 bazelajnovane u `d1_migrations`. Nove migracije idu same.
 - Provere bez kljuca: Actions API (javno), check-runs annotations (tacna greska
@@ -63,37 +91,40 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - CPU limit mejl (1000+ proboja): odgovor je dijeta (grupni upisi, krug 20->10,
   ruta sa kapom) — presuda po sledecem mejlu.
 
-## VAZNO: radi i drugi agent paralelno
+## VAZNO: drugi agent ne radi (od 16.09) — NE VAZI stari paralelni rad
 
-- Drugi agent (sa vlasnikom, danju) gura direktno u main: guste straze na
-  2 min (hydro/official/sea/numerical), tick otkucaji, merac vazduha (EPA),
-  kes-cuvar-decod-036. NE gaziti se: pre pusha uvek `git pull --ff-only`,
-  rizicno na rev/* grane.
-- Neslaganje za uskladiti: prozori (DEC-030/031) vs uvek-gusto; poslato im
-  na recenziju (CHANGES: guard kompletnosti kesa, vazduh ceka odluku vlasnika).
-- Zadnji vidjeni head: f294fca (kes cuva zadnje dobro, DEC-036).
+- Drugi agent je stao 16.09 (nedovrsen pokusaj gasenja numerickog meraca,
+  odbacen). Ostao samo ovaj agent sa vlasnikom. Nema uskladjivanja, nema
+  cuvanja rev/* grane za drugog. Stari tekst o paralelnom guranju u main
+  ostaje ispod samo kao istorija.
+- (Istorija 10.09: drugi agent danju gurao direktno u main: guste straze,
+  tick otkucaji, EPA merac. Zadnji vidjeni head tad: f294fca, DEC-036.)
 
-## Zivo stanje (provereno)
+## Zivo stanje (provereno 20.09)
 
 - App: https://meteomne-v6.n2racun.workers.dev/ — kartice pune (T/vetar/kisa/
   vlaga/pritisak/udar/sunce), tehnicki katalog na dnu, API 0.21s -> 0.067s kes.
-- Krug 1 min (bulk otisak-po-stanici -> grafici dogadjaj limit 10 -> straze ->
-  numericke ture) + krug 10 min (logeri/pisci). Ivica kes 60s (ne za debug).
-- Health: /api/health zelen; greske kruga se pisu u source_status (vidljivo
-  na /api/graph-debug bez kljuca).
-- Merenja 48h u toku: official_log, hydro_log, sea_snow_log (citanje ~09-10).
+- Krug 1 min (bulk otisak-po-stanici -> grafici dogadjaj limit 5 -> straze ->
+  numericke ture 2 grada) + krug 10 min (merac samo na promenu + pisci).
+  Ivica kes 60s (ne za debug).
+- Health: /api/health zelen 20.09 (bulk/grafici 0-8 min, reke ~11-19 min,
+  zvanicna/more provereno ~11-19 min); greske kruga u source_status
+  (vidljivo na /api/graph-debug bez kljuca).
+- Merenja gotova: official 345 zapisa, hydro 193, more 145, numericka 4715
+  (obrasci izmereni 07-20.09, DEC-037..039). Slusaci cekaju gasenje, kes ostaje.
 - Numericke ture done za oba modela; /api/numerical-status javan.
-- Sneg 0 leti (ispravno), Pošćenje crtice = izvor nema podatak (ispravno).
+- Sneg 0 (ispravno), Pošćenje crtice = izvor nema podatak (ispravno).
+- Vazduh: 36 zapisa samo 09.09, merac nije vezan + strana bez var points.
+  Odluka vlasnika ceka da li ulazi.
 
-## Otvoreno / sledece
+## Otvoreno / sledece (20.09)
 
-1. D1 reset + presuda dijete (grafikon + mejl).
-2. Citanje 48h obrazaca -> prozori za zvanicnu/reke/more.
-3. Odluka vlasnika: vazduh (EPA) ulazi ili napolje.
-4. Uskladjivanje sa drugim agentom (review CHANGES resen pre sirenja).
-5. Prva prava upotreba recenzenta na sledecoj rizicnoj izmeni.
-6. Finalni frontend tek kad backend stabilan; TASKS.md sredjen.
-7. Token rok ~2026-10-08 — podsetiti na vreme.
+1. Gasenje slusaca (kes za sluzenje ostaje) + nocni redji ritam po obrascu.
+2. Presuda mejlova 2-3 dana: D1 79% (reset 16.09) + CPU 1000+ od 13.09.
+3. Odluka vlasnika: vazduh (EPA) ulazi ili napolje, pa popravka EPA strane.
+4. Prva prava upotreba recenzenta na sledecoj rizicnoj izmeni.
+5. Finalni frontend tek kad backend stabilan.
+6. Token rok ~2026-10-08 — podsetiti na vreme.
 
 ## Zamke (ne ponavljati)
 
@@ -104,10 +135,19 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Prazna baza se sama pokrece (seed pending) — provereno testom.
 - Upisivac kesa mora guard kompletnosti (ne prepisuj manje preko veceg).
 - Module-level `let` ne vazi preko Worker izolata (otisci moraju u D1).
-- Agentmemory: upisi se potvrdjuju (vracaju ID) ali recall/smart_search ne
-  vracaju nista cak ni u istoj sesiji (provereno 2026-09-10 sa oba puta).
-  Jedina proverena zajednicka memorija je ovaj repo. Ne oslanjati se na
-  agentmemory za handoff dok se citanje ne dokaze unakrsno izmedju agenata.
+- Prazno nije nula i tacka bez koordinata se ne crta: Bojana desni-rukavac
+  (10BODR10) nema koordinate na izvoru (potvrdjeno 20.09 drugim modelom);
+  preskoci upis u tabelu stanica, voda ide kroz kes. Vazi i za svaku sledecu.
+- Cuvanje mora da razume oba oblika zapisa (AWS stationId/latitude/longitude,
+  hidro id/lat/lon) i da prazno pretvori u nista; red bez imena se preskoci.
+- Test mora da se menja zajedno sa budzetom (limit 10->5 srusio CI 20.09).
+- Krug je pretezak cim minutni uspeh stari a pocetak svez + subrequest greska:
+  smanji grafici/ture, sveze prvo, merac kasnjenja dokazuje (granica 3 min).
+- Agentmemory citanje od 19.09 ponovo radi; upozorenje od 11.09 ne vazi.
+  (Ostaje: repo je glavna memorija.)
+- Stara pokidana kopija je u `MeteoMNEv6-pokvareno` (git bez HEAD/config);
+  radna je `fresh-MeteoMNEv6`. Slaba masina: novi browser se ne otvara
+  (Min je glavni); dozvole idu preko masinskih promenljivih + Secrets, nikad chat.
 
 ## Cilj vlasnika (njegovim recima sredjeno)
 
