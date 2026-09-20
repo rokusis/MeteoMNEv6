@@ -185,6 +185,19 @@ async function noteError(db: any, source: string, e: any) {
     ).bind(source, source, now, msg).run();
   } catch {}
 }
+// Uspeh brise staru gresku (last_error=NULL) da slika ostane tacna:
+// inace stara poruka stoji i kad je vec proslo (vidjeno za reke 20.09).
+async function noteSuccess(db: any, source: string, count: number) {
+  try {
+    if (!db) return;
+    const now = new Date().toISOString();
+    await db.prepare(
+      `INSERT INTO source_status (source, last_success_at, last_fetched_at, last_error, last_count)
+       VALUES (?, ?, ?, NULL, ?)
+       ON CONFLICT(source) DO UPDATE SET last_success_at=excluded.last_success_at, last_fetched_at=excluded.last_fetched_at, last_error=NULL, last_count=excluded.last_count`,
+    ).bind(source, now, now, count).run();
+  } catch {}
+}
 export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     try {
@@ -232,7 +245,10 @@ export default {
         } catch (e) { console.error('synop cron error', e); await noteError(env.DB, 'synop', e); }
         try {
           const { refreshHydro } = await import('./sources/hydro/liveHydro');
-          if (env.DB) await refreshHydro(env.DB as any);
+          if (env.DB) {
+            const r = await refreshHydro(env.DB as any);
+            if (r.updated) await noteSuccess(env.DB, 'hydro', 1);
+          }
         } catch (e) { console.error('hydro cron error', e); await noteError(env.DB, 'hydro', e); }
         try {
           const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
