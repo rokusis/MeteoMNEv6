@@ -252,7 +252,10 @@ export default {
         } catch (e) { console.error('hydro cron error', e); await noteError(env.DB, 'hydro', e); }
         try {
           const { refreshSeaSnow } = await import('./sources/zhms-sea-snow/liveSeaSnow');
-          if (env.DB) await refreshSeaSnow(env.DB as any);
+          if (env.DB) {
+            const r = await refreshSeaSnow(env.DB as any);
+            if (r.updated) await noteSuccess(env.DB, 'sea-snow', 1);
+          }
         } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
       }
       // Kraj kruga na uzorku (10-minutni uvek, minutni svaki deseti minut):
