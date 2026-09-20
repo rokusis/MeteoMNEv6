@@ -14,6 +14,10 @@ export async function saveStations(db: D1Database, stations: Station[]): Promise
     const lon = s.longitude ?? s.lon ?? null;
     const latNum = lat === '' || lat == null || Number.isNaN(Number(lat)) ? null : Number(lat);
     const lonNum = lon === '' || lon == null || Number.isNaN(Number(lon)) ? null : Number(lon);
+    // Tacka bez mesta se ne crta na karti (npr. Bojana desni-rukavac nema
+    // koordinate). Preskace se samo upis u zajednicku tabelu, voda se i
+    // dalje pamti kroz kes za reke. Nula se nikad ne pise umesto praznog.
+    if (latNum == null || lonNum == null) continue;
     await db.prepare(
       `INSERT INTO stations (station_id, wmo_id, name, latitude, longitude, elevation, station_type, river, is_active, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
