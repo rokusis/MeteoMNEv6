@@ -11,8 +11,8 @@ function snap(id: string, ms: number | null) {
 }
 
 describe('graphRefresh izbor', () => {
-  it('limit je 10 po krugu (CPU dijeta, rep ~5 min)', () => {
-    expect(GRAPH_REFRESH_LIMIT).toBe(10);
+  it('limit je 5 po krugu (CPU dijeta, sveze prvo, rep ~8 min)', () => {
+    expect(GRAPH_REFRESH_LIMIT).toBe(5);
   });
   it('cap po krugu, najstariji snimak prvi', () => {
     const last = Date.UTC(2026, 8, 5, 12, 0);
