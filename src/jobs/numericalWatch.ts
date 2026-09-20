@@ -99,7 +99,7 @@ export async function fetchCityModel(db: D1Database, model: NumModel, city: stri
   }
 }
 
-const BATCH_CITIES = 3;
+const BATCH_CITIES = 2;
 const BATCH_BUDGET_MS = 20000;
 
 // Jedna tura: par gradova, pa stani. Kursor pamti dokle se stiglo,

@@ -5,9 +5,9 @@ import { saveTimeseriesBatch } from '../lib/timeseriesDb';
 import { saveSourceStatus } from '../db';
 
 // Gomila u :00 je 37 stanica odjednom (27 satnih + 9 brzih + Kotor).
-// 10 po krugu zbog CPU limita (mejl 1000+ prekrsaja); rep je ~5 min.
-// Validirano simulacijom: nema gladovanja, nula promasaja.
-export const GRAPH_REFRESH_LIMIT = 10;
+// 5 po krugu zbog CPU limita (mejl 1000+ prekrsaja + subrequest greska 20.09);
+// sveze (pomeren snimak) ide prvo pa se kasnjenje 2-3 min ne kvari, rep je ~8 min.
+export const GRAPH_REFRESH_LIMIT = 5;
 // Merac kasnjenja repa: pise se samo kad pokrivanje snimka kasni preko granice.
 // Po pravilu svezine granica je 3 minuta; tisina znaci da rep stize na vreme.
 export const GRAPH_LAG_LIMIT_MIN = 3;
