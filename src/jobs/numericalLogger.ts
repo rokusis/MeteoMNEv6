@@ -7,18 +7,24 @@ export async function logNumericalSentinel(db: D1Database): Promise<void> {
     const folder = model==="a3km"?"5danaA":"5danaE";
     const url = `https://www.meteo.co.me/Meteorologija/Pr/Gradovi/${folder}/${city}-${letter}${day}.html`;
     try {
-      let lastMod: string | null = null;
+      let prev: { last_modified: string | null; status: string | null } = { last_modified: null, status: null };
       try {
-        const row = await db.prepare(`SELECT last_modified FROM numerical_log WHERE city=? AND model=? ORDER BY checked_at DESC LIMIT 1`).bind(city, model).first() as any;
-        lastMod = row?.last_modified || null;
+        const row = await db.prepare(`SELECT last_modified, status FROM numerical_log WHERE city=? AND model=? ORDER BY checked_at DESC LIMIT 1`).bind(city, model).first() as any;
+        prev = { last_modified: row?.last_modified ?? null, status: row?.status ?? null };
       } catch {}
       const headers: Record<string,string> = {};
-      if (lastMod) headers["If-Modified-Since"] = lastMod;
+      if (prev.last_modified) headers["If-Modified-Since"] = prev.last_modified;
       const res = await fetch(url, { method: "GET", headers });
-      const lm = res.headers.get("last-modified") || res.headers.get("Last-Modified") || lastMod;
+      const lm = res.headers.get("last-modified") || res.headers.get("Last-Modified") || prev.last_modified;
       const etag = res.headers.get("etag") || res.headers.get("ETag") || null;
       const status = String(res.status);
-      await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, lm, etag, now, status).run();
+      // Pisi samo na promenu/gresku + satni heartbeat da se vidi da merac zivi.
+      // Pre je pisao svaki 10-minutni krug i kad nema promene (~288 redova/dan).
+      const changed = prev.last_modified !== lm || prev.status !== status;
+      const heartbeat = new Date().getUTCMinutes() === 0;
+      if (changed || heartbeat || prev.last_modified == null) {
+        await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, lm, etag, now, status).run();
+      }
       // Puno povlacenje od 125 fajlova je prebaceno na ture sa kursorom
       // (jobs/numericalWatch) jer je ovde pucalo na limitu subrequesta.
       // Merac ostaje, samo vise ne vuce.
