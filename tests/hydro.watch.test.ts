@@ -9,6 +9,12 @@ const T = (h: number, m: number) => Date.UTC(2026, 8, 9, h, m, 0);
 function fakeDb() {
   const rows: any[] = [];
   const cacheWrites: any[] = [];
+  // Cuvar oblika pamti oblik odvojeno od belezske (prava baza ih drzi odvojeno).
+  let schemaRow: any = null;
+  const firstFor = (sql: string) => {
+    if (sql.includes('schema_state')) return schemaRow;
+    return rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null;
+  };
   return {
     rows,
     cacheWrites,
@@ -17,11 +23,14 @@ function fakeDb() {
         run: async () => {
           if (_sql.includes('hydro_log')) rows.push({ checked_at: a[0], status: a[1], fingerprint: a[2], station_count: a[3] });
           else if (_sql.includes('INTO ')) cacheWrites.push(_sql.slice(0, 30));
+          if (_sql.startsWith('INSERT INTO schema_state')) schemaRow = { fingerprint: a[1], pending_fp: null, pending_hits: 0 };
+          else if (_sql.startsWith('UPDATE schema_state SET fingerprint=')) schemaRow = { fingerprint: a[0], pending_fp: null, pending_hits: 0 };
+          else if (_sql.startsWith('UPDATE schema_state SET pending_fp=')) { if (schemaRow) { schemaRow.pending_fp = a[0]; schemaRow.pending_hits = a[1]; } }
         },
-        first: async () => (rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null),
+        first: async () => firstFor(_sql),
         all: async () => ({ results: rows }),
       }),
-      first: async () => (rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null),
+      first: async () => firstFor(_sql),
       all: async () => ({ results: rows }),
     }),
   } as any;
