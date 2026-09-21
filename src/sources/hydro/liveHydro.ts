@@ -6,6 +6,12 @@ let cache: { stations: any[]; observations: any[]; fetchedAt: string } | null = 
 export async function fetchHydroLive(db?: D1Database): Promise<{ stations: any[]; observations: any[] }> {
   const res = await zhmsFetch(URL);
   const html = await res.text();
+  if (db) {
+    // Cuvar oblika: promena seme baca gresku pa vazi zadnje-dobro (DEC-006).
+    const { schemaFingerprint, checkSchema } = await import('../../lib/schemaWatch');
+    const sch = await checkSchema(db, 'hydro', schemaFingerprint(html, ['staniceH', 'posljednje']));
+    if (sch.changed) throw new Error('hydro schema change, sacuvano prethodno');
+  }
   const stations = parseHydroStations(html);
   const observations = parseHydroObs(html);
   if (!observations.length) throw new Error('hydro empty');
@@ -63,7 +69,7 @@ export function shouldPersistHydro(
 
 // Za kron na 10 min: reke se menjaju sporo, upis je jedan mali red.
 export async function refreshHydro(db: D1Database): Promise<{ updated: boolean }> {
-  const r = await fetchHydroLive();
+  const r = await fetchHydroLive(db);
   let prev: { stations: any[]; observations: any[] } | null = null;
   try {
     prev = await loadHydro(db);

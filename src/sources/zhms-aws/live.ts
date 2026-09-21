@@ -57,6 +57,12 @@ export async function fetchAndPersist(db: D1Database): Promise<any[]> {
   const stations = parseStations(text);
   const rawObs = parseObservations(text);
   const normalized = normalizeObservations(stations, rawObs);
+  if (db) {
+    // Cuvar oblika: promena seme baca gresku pa vazi zadnje-dobro (DEC-006).
+    const { schemaFingerprint, checkSchema } = await import('../../lib/schemaWatch');
+    const sch = await checkSchema(db, 'aws', schemaFingerprint(text, ['stanice', 'posljednje']));
+    if (sch.changed) throw new Error('AWS schema change, sacuvano prethodno');
+  }
   if (normalized.length === 0) throw new Error('no normalized');
   if (db) {
     const prev = await loadBulkFingerprints(db);
