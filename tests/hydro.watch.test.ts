@@ -45,7 +45,7 @@ describe('hidro gusta straza', () => {
     expect(spy).not.toHaveBeenCalled();
     expect(db.rows.length).toBe(0);
   });
-  it('upis samo na promenu, heartbeat na pun sat', async () => {
+  it('upis samo na promenu, heartbeat jednom dnevno u ponoc', async () => {
     const db = fakeDb();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE1, { status: 200 }) as any);
     const r1 = await runHydroTick(db, T(0, 2));
@@ -55,8 +55,8 @@ describe('hidro gusta straza', () => {
     const r2 = await runHydroTick(db, T(0, 4));
     expect(r2).toEqual({ checked: true, changed: false });
     expect(db.rows.length).toBe(1);
-    // isto, pun sat -> heartbeat
-    const r3 = await runHydroTick(db, T(1, 0));
+    // isto, ponoc -> heartbeat
+    const r3 = await runHydroTick(db, T(0, 0));
     expect(r3).toEqual({ checked: true, changed: false });
     expect(db.rows.length).toBe(2);
     expect(db.rows[1].status).toBe('same');

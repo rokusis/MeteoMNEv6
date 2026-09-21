@@ -27,16 +27,18 @@ function fakeDb() {
   } as any;
 }
 
-describe('official gusti prozor', () => {
+describe('official gusti prozor (danju 2min, nocu 30min)', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-  it('kapija: parni minut uvek, neparni nikad', () => {
+  it('kapija: danju parni minut, nocu samo punih 30', () => {
     expect(officialWatchOpen(T(11, 10))).toBe(true);
     expect(officialWatchOpen(T(10, 30))).toBe(true);
     expect(officialWatchOpen(T(3, 0))).toBe(true);
     expect(officialWatchOpen(T(11, 11))).toBe(false);
     expect(officialWatchOpen(T(23, 59))).toBe(false);
+    expect(officialWatchOpen(T(23, 30))).toBe(true);
+    expect(officialWatchOpen(T(0, 15))).toBe(false);
   });
   it('neparni minut ne dira mrezu', async () => {
     const db = fakeDb();
@@ -46,18 +48,18 @@ describe('official gusti prozor', () => {
     expect(spy).not.toHaveBeenCalled();
     expect(db.rows.length).toBe(0);
   });
-  it('upis samo na promenu, heartbeat na pun sat', async () => {
+  it('upis samo na promenu, heartbeat jednom dnevno u ponoc', async () => {
     const db = fakeDb();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE1, { status: 200 }) as any);
     const r1 = await runOfficialTick(db, T(11, 10));
     expect(r1).toEqual({ checked: true, changed: true });
     expect(db.rows[0].status).toBe('first');
-    // isto, nije pun sat -> bez upisa
+    // isto, nije ponoc -> bez upisa
     const r2 = await runOfficialTick(db, T(11, 12));
     expect(r2).toEqual({ checked: true, changed: false });
     expect(db.rows.length).toBe(1);
-    // isto, pun sat -> heartbeat
-    const r3 = await runOfficialTick(db, T(12, 0));
+    // isto, ponoc -> heartbeat
+    const r3 = await runOfficialTick(db, T(0, 0));
     expect(r3).toEqual({ checked: true, changed: false });
     expect(db.rows.length).toBe(2);
     expect(db.rows[1].status).toBe('same');

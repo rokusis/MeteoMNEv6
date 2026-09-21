@@ -1,17 +1,19 @@
 import { fetchOfficialLive } from '../sources/zhms-official-forecast/liveOfficial';
 import { officialFingerprint } from './officialLogger';
 
-// Gusta straza za zvanicnu prognozu: provera na svaka 2 minuta ceo dan.
-// Merenje 07-09.09. pokazalo smenu dana ~11:10 i re-izdanje ~12:50 UTC,
-// ali pravilo svezine trazi puno radno vreme pa prozor sluzi samo kao
-// dijagnostika, ne kao kapija. 10-minutni sentinel je ugasen jer ga
-// ova straza potpuno zamenjuje.
+// Gusta straza za zvanicnu prognozu: danju na svaka 2 minuta, nocu na pola
+// sata. Merenje 07-20.09: 0 promena 20-04 lokalno (18-02 UTC), pa nocni redji
+// ritam ne dira svezinu. Danju sveze 2-3 min ostaje.
 export function officialWatchOpen(nowMs: number): boolean {
-  return new Date(nowMs).getUTCMinutes() % 2 === 0;
+  const d = new Date(nowMs);
+  const h = d.getUTCHours();
+  const m = d.getUTCMinutes();
+  if (h >= 18 || h < 2) return m % 30 === 0;
+  return m % 2 === 0;
 }
 
 // Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku
-// plus heartbeat na pun sat da se vidi da straza zivi.
+// plus heartbeat jednom dnevno u ponoc da se vidi da straza zivi.
 // Vraca da li je provereno i da li se promenilo.
 export async function runOfficialTick(db: D1Database, nowMs: number): Promise<{ checked: boolean; changed: boolean }> {
   if (!officialWatchOpen(nowMs)) return { checked: false, changed: false };

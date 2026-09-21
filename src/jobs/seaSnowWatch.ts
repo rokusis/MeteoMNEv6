@@ -11,7 +11,7 @@ export function seaSnowWatchOpen(nowMs: number): boolean {
 }
 
 // Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku
-// plus heartbeat na pun sat da se vidi da straza zivi.
+// plus heartbeat jednom dnevno u ponoc da se vidi da straza zivi.
 // Vraca da li je provereno i da li se promenilo.
 export async function runSeaSnowTick(db: D1Database, nowMs: number): Promise<{ checked: boolean; changed: boolean }> {
   if (!seaSnowWatchOpen(nowMs)) return { checked: false, changed: false };
