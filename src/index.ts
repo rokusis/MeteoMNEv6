@@ -261,6 +261,13 @@ export default {
             if (r.updated) await noteSuccess(env.DB, 'sea-snow', 1);
           }
         } catch (e) { console.error('sea snow cron error', e); await noteError(env.DB, 'sea-snow', e); }
+        try {
+          const { refreshOfficial } = await import('./sources/zhms-official-forecast/liveOfficial');
+          if (env.DB) {
+            const r = await refreshOfficial(env.DB as any);
+            if (r.updated) await noteSuccess(env.DB, 'official', 1);
+          }
+        } catch (e) { console.error('official cron error', e); await noteError(env.DB, 'official', e); }
       }
       // Kraj kruga na uzorku (10-minutni uvek, minutni svaki deseti minut):
       // pocetak svakog kruga se belezi uvek, a ovime se stedi D1 limit.
@@ -340,7 +347,7 @@ export default {
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/forecast/official') {
-        try { const { getOfficial }=await import('./sources/zhms-official-forecast/liveOfficial'); const r=await getOfficial(); return Response.json({ status:'ok', ...r }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+        try { const { getOfficial }=await import('./sources/zhms-official-forecast/liveOfficial'); const r=await getOfficial(env.DB as any); return Response.json({ status:'ok', ...r }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/numerical-log') {
         try {
