@@ -21,7 +21,7 @@ export async function logNumericalSentinel(db: D1Database): Promise<void> {
       // Pisi samo na promenu/gresku + satni heartbeat da se vidi da merac zivi.
       // Pre je pisao svaki 10-minutni krug i kad nema promene (~288 redova/dan).
       const changed = prev.last_modified !== lm || prev.status !== status;
-      const heartbeat = new Date().getUTCMinutes() === 0;
+      const heartbeat = new Date().getUTCMinutes() === 0 && new Date().getUTCHours() === 0;
       if (changed || heartbeat || prev.last_modified == null) {
         await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, lm, etag, now, status).run();
       }

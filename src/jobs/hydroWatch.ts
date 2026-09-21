@@ -26,7 +26,7 @@ export async function runHydroTick(db: D1Database, nowMs: number): Promise<{ che
       prev = row?.fingerprint ?? null;
     } catch {}
     const changed = prev == null || prev !== fp;
-    const heartbeat = new Date(nowMs).getUTCMinutes() === 0;
+    const heartbeat = new Date(nowMs).getUTCMinutes() === 0 && new Date(nowMs).getUTCHours() === 0;
     const status = prev == null ? 'first' : changed ? 'changed' : 'same';
     if (changed || heartbeat || prev == null) {
       await db
