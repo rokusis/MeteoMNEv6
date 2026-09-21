@@ -1,8 +1,13 @@
 import type { Station } from './sources/zhms-aws/parseStations';
 import type { NormalizedObservation } from './sources/zhms-aws/normalize';
 
+const STATION_SQL = `INSERT INTO stations (station_id, wmo_id, name, latitude, longitude, elevation, station_type, river, is_active, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(station_id) DO UPDATE SET wmo_id=excluded.wmo_id, name=excluded.name, latitude=excluded.latitude, longitude=excluded.longitude, elevation=excluded.elevation, station_type=excluded.station_type, river=excluded.river, is_active=excluded.is_active, updated_at=excluded.updated_at`;
+
 export async function saveStations(db: D1Database, stations: Station[]): Promise<void> {
   const now = new Date().toISOString();
+  const rows: any[][] = [];
   for (const s of stations as any[]) {
     // AWS oblik: stationId/latitude/longitude, hidro oblik: id/lat/lon.
     // Prazno se pretvara u null jer D1 ne prima undefined (greska vidjena
@@ -15,25 +20,46 @@ export async function saveStations(db: D1Database, stations: Station[]): Promise
     const latNum = lat === '' || lat == null || Number.isNaN(Number(lat)) ? null : Number(lat);
     const lonNum = lon === '' || lon == null || Number.isNaN(Number(lon)) ? null : Number(lon);
     // Tacka bez mesta se ne crta na karti (npr. Bojana desni-rukavac nema
-    // koordinate). Preskace se samo upis u zajednicku tabelu, voda se i
-    // dalje pamti kroz kes za reke. Nula se nikad ne pise umesto praznog.
+    // koordinate). Preskace se samo upis u zajednicku tabelu, voda ide kroz kes.
     if (latNum == null || lonNum == null) continue;
-    await db.prepare(
-      `INSERT INTO stations (station_id, wmo_id, name, latitude, longitude, elevation, station_type, river, is_active, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(station_id) DO UPDATE SET wmo_id=excluded.wmo_id, name=excluded.name, latitude=excluded.latitude, longitude=excluded.longitude, elevation=excluded.elevation, station_type=excluded.station_type, river=excluded.river, is_active=excluded.is_active, updated_at=excluded.updated_at`
-    ).bind(String(sid).trim(), (s as any).wmoId ?? null, nm, latNum, lonNum, (s as any).elevation ?? null, (s as any).stationType ?? s.stationType ?? null, (s as any).river ?? null, s.statusFlag === 1 || s.statusFlag === '1' || (s as any).flag === 1 ? 1 : 0, now).run();
+    rows.push([String(sid).trim(), (s as any).wmoId ?? null, nm, latNum, lonNum, (s as any).elevation ?? null, (s as any).stationType ?? s.stationType ?? null, (s as any).river ?? null, s.statusFlag === 1 || s.statusFlag === '1' || (s as any).flag === 1 ? 1 : 0, now]);
+  }
+  if (!rows.length) return;
+  // Snop umesto red-po-red: manje odlazaka do baze, manje CPU.
+  // Na gresku pada nazad na obican upis (kao istorija).
+  try {
+    if (typeof (db as any).batch === 'function') {
+      for (let i = 0; i < rows.length; i += 50) {
+        await (db as any).batch(rows.slice(i, i + 50).map((r) => db.prepare(STATION_SQL).bind(...r)));
+      }
+      return;
+    }
+  } catch {}
+  for (const r of rows) {
+    await db.prepare(STATION_SQL).bind(...r).run();
   }
 }
 
+const OBS_SQL = `INSERT INTO observations (station_id, measured_at_raw, temperature_c, precipitation_mm, wind_speed_ms, wind_direction_code, wind_direction_deg, wind_compass, gust_ms, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(station_id) DO UPDATE SET measured_at_raw=excluded.measured_at_raw, temperature_c=excluded.temperature_c, precipitation_mm=excluded.precipitation_mm, wind_speed_ms=excluded.wind_speed_ms, wind_direction_code=excluded.wind_direction_code, wind_direction_deg=excluded.wind_direction_deg, wind_compass=excluded.wind_compass, gust_ms=excluded.gust_ms, fetched_at=excluded.fetched_at`;
+
 export async function saveObservations(db: D1Database, obs: NormalizedObservation[]): Promise<void> {
   const now = new Date().toISOString();
-  for (const o of obs) {
-    await db.prepare(
-      `INSERT INTO observations (station_id, measured_at_raw, temperature_c, precipitation_mm, wind_speed_ms, wind_direction_code, wind_direction_deg, wind_compass, gust_ms, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(station_id) DO UPDATE SET measured_at_raw=excluded.measured_at_raw, temperature_c=excluded.temperature_c, precipitation_mm=excluded.precipitation_mm, wind_speed_ms=excluded.wind_speed_ms, wind_direction_code=excluded.wind_direction_code, wind_direction_deg=excluded.wind_direction_deg, wind_compass=excluded.wind_compass, gust_ms=excluded.gust_ms, fetched_at=excluded.fetched_at`
-    ).bind(o.stationId, o.measuredAtRaw, o.temperatureC ?? null, o.precipitationMm ?? null, o.windSpeedMs ?? null, o.windDirectionCode ?? null, o.windDirectionDeg ?? null, o.windCompass ?? null, o.gustMs ?? null, now).run();
+  const rows = (obs as any[]).map((o: any) => [o.stationId, o.measuredAtRaw, o.temperatureC ?? null, o.precipitationMm ?? null, o.windSpeedMs ?? null, o.windDirectionCode ?? null, o.windDirectionDeg ?? null, o.windCompass ?? null, o.gustMs ?? null, now]);
+  if (!rows.length) return;
+  // Snop umesto red-po-red: manje odlazaka do baze, manje CPU.
+  // Na gresku pada nazad na obican upis (kao istorija).
+  try {
+    if (typeof (db as any).batch === 'function') {
+      for (let i = 0; i < rows.length; i += 50) {
+        await (db as any).batch(rows.slice(i, i + 50).map((r) => db.prepare(OBS_SQL).bind(...r)));
+      }
+      return;
+    }
+  } catch {}
+  for (const r of rows) {
+    await db.prepare(OBS_SQL).bind(...r).run();
   }
 }
 
