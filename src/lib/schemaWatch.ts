@@ -112,9 +112,14 @@ export async function checkSchema(db: D1Database, source: string, fp: string): P
   try {
     row = await db.prepare(`SELECT fingerprint, pending_fp, pending_hits FROM schema_state WHERE source=?`).bind(source).first();
   } catch {}
-  if (!row) {
+  if (!row || row.fingerprint == null) {
+    // Prvo vidjenje (ili red bez otiska): upisi i prodji.
     try {
-      await db.prepare(`INSERT INTO schema_state (source, fingerprint, pending_fp, pending_hits, updated_at) VALUES (?, ?, NULL, 0, ?)`).bind(source, fp, now).run();
+      if (!row) {
+        await db.prepare(`INSERT INTO schema_state (source, fingerprint, pending_fp, pending_hits, updated_at) VALUES (?, ?, NULL, 0, ?)`).bind(source, fp, now).run();
+      } else {
+        await db.prepare(`UPDATE schema_state SET fingerprint=?, pending_fp=NULL, pending_hits=0, updated_at=? WHERE source=?`).bind(fp, now, source).run();
+      }
     } catch {}
     return { changed: false, first: true };
   }

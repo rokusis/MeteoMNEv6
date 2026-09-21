@@ -11,16 +11,26 @@ function countingDb() {
   const writes: string[] = [];
   let hydroRow: any = null;
   let seaRow: any = null;
+  // Cuvar oblika pamti oblik van brojaca upisa (njegov 1 red ne kvari meru).
+  let schemaRow: any = null;
   const firstFor = (sql: string) => {
     if (sql.includes('hydro_cache')) return hydroRow;
     if (sql.includes('sea_snow_cache')) return seaRow;
+    if (sql.includes('schema_state')) return schemaRow;
     return null;
+  };
+  const schemaRun = (sql: string, a: any[]) => {
+    if (sql.startsWith('INSERT INTO schema_state')) schemaRow = { fingerprint: a[1], pending_fp: null, pending_hits: 0 };
+    else if (sql.startsWith('UPDATE schema_state SET fingerprint=')) schemaRow = { fingerprint: a[0], pending_fp: null, pending_hits: 0 };
+    else if (sql.startsWith('UPDATE schema_state SET pending_fp=NULL')) { if (schemaRow) { schemaRow.pending_fp = null; schemaRow.pending_hits = 0; } }
+    else if (sql.startsWith('UPDATE schema_state SET pending_fp=')) { if (schemaRow) { schemaRow.pending_fp = a[0]; schemaRow.pending_hits = a[1]; } }
   };
   return {
     writes,
     prepare: (sql: string) => ({
       bind: (...a: any[]) => ({
         run: async () => {
+          if (sql.includes('schema_state')) { schemaRun(sql, a); return; }
           if (sql.includes('INTO ')) writes.push(sql.slice(0, 30));
           if (sql.includes('INTO hydro_cache')) hydroRow = { fetched_at: a[0], payload: a[1] };
           if (sql.includes('INTO sea_snow_cache')) seaRow = { fetched_at: a[0], payload: a[1] };
