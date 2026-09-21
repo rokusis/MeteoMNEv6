@@ -501,7 +501,7 @@ Track:
 ---
 
 ## TASK-121 — Schema change detection
-Status: TODO
+Status: DONE 2026-09-21 (schema_state + checkSchema for AWS/hydro; 3 same new shapes = new normal; silent change blocked, previous-good served)
 
 Detect meaningful changes in source structure.
 
