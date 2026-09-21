@@ -240,6 +240,10 @@ export default {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
         try {
+          const { logAirSentinel } = await import('./jobs/airLogger');
+          if (env.DB) await logAirSentinel(env.DB as any);
+        } catch (e) { console.error('air cron error', e); }
+        try {
           const { refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB) await refreshSynop(env.DB as any);
         } catch (e) { console.error('synop cron error', e); await noteError(env.DB, 'synop', e); }
