@@ -1,8 +1,8 @@
 # HANDOFF — stanje projekta MeteoMNEv6
 
-Datum: 2026-09-10, dopuna 2026-09-20. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
+Datum: 2026-09-10, dopuna 2026-09-22. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
 bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
-(026-039), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
+(026-044), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
 (faza 15), pa ovaj fajl. Ovaj fajl se obnavlja posle svake vece promene.
 
 ## Dopuna 2026-09-20 (novi agent, drugi agent ne radi)
@@ -26,10 +26,11 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Obrazac izmeren iz pune baze (07-20.09, vise od 48h): zvanicna 345 zapisa,
   samo danju 05-19; reke 193 zapisa, promene skoro svaki put; more 145 zapisa,
   na dan-dva; racunarska 4715 zapisa od 04.09, novo svaki dan a3km ~08:50 i
-  e3km ~11:30; vazduh 36 zapisa samo 09.09 (merac nije vezan u krug + strana
-  nema vise var points). Odluka vlasnika za vazduh ceka.
-- Otvoreno: gasenje slusaca (kes ostaje), nocni redji ritam, presuda mejlova
-  (D1 79% reset 16.09 + CPU 1000+ od 13.09), pa frontend tek kad stabilno.
+   e3km ~11:30; vazduh 36 zapisa samo 09.09 (merac nije vezan u krug + strana
+   je kasnije proverena: var points postoji, podaci svezi). Odluka vlasnika
+   21.09: vazduh ULAZI posle merenja (DEC-042, TASK-162).
+- Otvoreno tad: gasenje slusaca (kes ostaje), nocni redji ritam, presuda mejlova,
+  pa frontend tek kad stabilno. (Uradjeno 21.09, vidi dopunu ispod.)
 
 ## Dopuna 2026-09-21 nocu (zastita + vidljivost + stednja + vazduh + sken)
 
@@ -52,9 +53,19 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
   svaki dan. Dva obrasca: brzo pucanje 06:00/13:00 UTC (izvor nedostupan,
   mali CPU) i sporo uvece (parsiranje+upisi). Gubitka podataka nema
   (zadnje dobro + nastavak od sacuvanog mesta).
-- Otvoreno: danasnji procenat upisa uvece, jutarnje ture ~08:50/11:30 i
-  dnevno kasnjenje ispod 3 min, ritam vazduha kroz par dana + odluka ulazi
-  ili ne, pa papir za prednji deo (kartica + grafovi 24h/7d/30d/max).
+- Otvoreno tad: danasnji procenat upisa uvece, jutarnje ture ~08:50/11:30 i
+  dnevno kasnjenje ispod 3 min, ritam vazduha + papir za prednji deo.
+
+## Dopuna 2026-09-22 (kes zvanicne + cuvar oblika + prag neba)
+
+- Zvanicna iz baze (DEC-043, PR #4+#5): official_cache + 10-min pisac + kes
+  na promenu + ruta iz baze. Prvo CI pao na laznoj bazi (samo test), popravljeno.
+- Cuvar oblika seme za AWS i reke (DEC-044, TASK-121 GOTOV, PR #8+#9+#10):
+  3 ista nova oblika = novo normalno. CI padao na laznim bazama, popravljeno.
+- Prag neba po terminima (dan 180/noc 720) + vazduh null umesto 0 (PR #7).
+- D1 93% mejl 22.09 u 01:02 (reset 00:00 UTC). Stara pokvareno fascikla nestala
+  sa diska, sa njom i nen poslati prekidac (breaker.ts) - pisati novi ako zatreba.
+- Otvoreno: procenat upisa posle reseta, jutarnje ture, ritam vazduha, TASK-140/141.
 
 ## Vlasnik: ko je i kako se radi s njim (obavezno)
 

@@ -377,3 +377,21 @@ Scope: loadLatestParams po stanici preko indeksa (DEC-041), batch upisi po 50 (D
 Commit: 600cf3b / 4fdb7e2 merged as d0f664e
 Findings: sken 147k po otvaranju dokazan merenjem (Cloudflare tvrdnja o 116 redova opovrgnuta); CI green; zastita radi - pomocna grana + bypass za kvacicu odobrenja
 Result: PASS
+
+---
+## REVIEW-038 — zvanicna iz baze (rupa iz nezavisne analize)
+Date: 2026-09-21
+Reviewer: AI agent + vlasnik (direktno, PR #4 + #5)
+Scope: official_cache + 10-min pisac + straza kes + ruta iz baze (DEC-043)
+Commit: 8ed1cdc merged as 3f6e736, test fix 5398ca1 merged as f51611d
+Findings: prvo CI pao na laznoj bazi koja mesa kes i belezsku (samo test, uzivo dobro); popravljeno; posle CI+Deploy success; zvanicna uzivo iz baze
+Result: PASS
+
+---
+## REVIEW-039 — cuvar oblika seme (TASK-121)
+Date: 2026-09-21
+Reviewer: AI agent + vlasnik (direktno, PR #8 + #9 + #10)
+Scope: schema_state + checkSchema AWS/hydro, 3 ista nova oblika = novo normalno (DEC-044)
+Commit: b333318 merged as ec3ec01, test fix 106b34b merged as 5a06306, hydro redosled 08a4416 merged as 9335a68
+Findings: prvo CI pao na 3 testa (lazne baze bez tabele oblika); popravljeno red bez otiska + odvojena memorija oblika; posle CI+Deploy success
+Result: PASS

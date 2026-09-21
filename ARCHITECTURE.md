@@ -330,6 +330,10 @@ numerical_refresh
 official_log
 hydro_log
 sea_snow_log
+air_log
+official_cache
+schema_state
+graph_lag_log
 ```
 
 Exact schema is to be designed task-by-task after the real source contracts are implemented.
@@ -549,6 +553,16 @@ Once web behavior is stable:
 `React/Vite web app -> Capacitor -> Android/iOS`
 
 Native packaging must not force a second backend architecture.
+
+---
+
+# 24b. FUTURE AUDIENCE LIMIT (recorded 2026-09-21, not a current failure)
+
+Workers Free allows 100,000 requests/day to the Worker itself. Upstream load
+is bounded by design (single writer, users read the base, 60s edge cache),
+but app traffic has its own ceiling: 1M users cannot stay free on one Worker
+no matter how little D1 is read. No action now; revisit after backend freeze
+with real traffic numbers.
 
 ---
 
