@@ -11,17 +11,30 @@ const T = (h: number, m: number) => Date.UTC(2026, 8, 9, h, m, 0);
 
 function fakeDb() {
   const rows: any[] = [];
+  const cacheWrites: any[] = [];
+  let cachePayload: string | null = null;
+  let cacheAt = '';
+  const firstFor = (sql: string) => {
+    if (sql.includes('official_cache')) return cachePayload ? { fetched_at: cacheAt, payload: cachePayload } : null;
+    return rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null;
+  };
   return {
     rows,
+    cacheWrites,
     prepare: (sql: string) => ({
       bind: (...a: any[]) => ({
         run: async () => {
-          rows.push({ checked_at: a[0], status: a[1], fingerprint: a[2], titles: a[3] });
+          if (sql.includes('official_log')) rows.push({ checked_at: a[0], status: a[1], fingerprint: a[2], titles: a[3] });
+          else if (sql.includes('INTO ')) {
+            cacheWrites.push(sql.slice(0, 30));
+            cachePayload = a[1];
+            cacheAt = a[0];
+          }
         },
-        first: async () => (sql.includes('SELECT fingerprint') && rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null),
+        first: async () => firstFor(sql),
         all: async () => ({ results: rows }),
       }),
-      first: async () => (rows.length ? { fingerprint: rows[rows.length - 1].fingerprint } : null),
+      first: async () => firstFor(sql),
       all: async () => ({ results: rows }),
     }),
   } as any;
@@ -68,5 +81,7 @@ describe('official gusti prozor (danju 2min, nocu 30min)', () => {
     const r4 = await runOfficialTick(db, T(12, 50));
     expect(r4).toEqual({ checked: true, changed: true });
     expect(db.rows[2].status).toBe('changed');
+    // promena odmah osvezava i kes za serviranje
+    expect(db.cacheWrites.length).toBeGreaterThan(0);
   });
 });
