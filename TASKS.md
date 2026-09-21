@@ -583,7 +583,7 @@ Status: DONE (bulk + writers persist on change only)
 Status: DONE (limit 5 since 2026-09-20, was 10; 20s budget, resume; subrequest guard; DEC-039)
 
 ## TASK-153 — Numerical windows and cursor batches
-Status: DONE (e3km 09:00-10:30, a3km 06:00-13:00; full-pull retired)
+Status: DONE (windows retired as gates per DEC-036, kept as diagnostic knowledge; batches 2 cities since DEC-039; full-pull retired)
 
 ## TASK-154 — SYNOP dense watch + DB serving
 Status: DONE (windows around 07/14/21, night serves last term)
@@ -601,13 +601,13 @@ Status: DONE (per-source age, ok/stale/unknown)
 Status: DONE COLLECTING (official 345 rows 07-20.09, hydro 193, sea 145, numerical 4715 rows 04-20.09; air wired 21.09, measuring; owner decision 21.09: air ENTERS after measurement)
 
 ## TASK-159 — 48h pattern reading and windows
-Status: DONE READING 2026-09-20 (official day-only 05-19 local, hydro changes almost every check, sea every 1-2 days, numerical a3km ~08:50 + e3km ~11:30 local daily; air stale since 09.09; windows implementation pending)
+Status: DONE READING 2026-09-20 (official day-only 05-19 local, hydro changes almost every check, sea every 1-2 days, numerical a3km ~08:50 + e3km ~11:30 local daily; official night-gate live 21.09; air pattern collecting since 21.09)
 
 ## TASK-160 — CPU diet verdict
 Status: IN PROGRESS (numerical logger write-on-change 66d022b; saveStations dual-shape 2a97fea + coord-less skip 19dd01f; tick diet 5/2 22503e0+d318ed6; live health all ok 20.09; night-sparse + email watch next)
 
 ## TASK-161 — Reviewer first use
-Status: TODO (prompt ready per DEC-034)
+Status: DONE PROCESS 2026-09-21 (drugog modela nema; proces je zastita glavne grane + pomocna grana + masina + vlasnik spoji; dokazano na PR #1/#4/#5)
 
 ## TASK-162 — Air API and display (after pattern)
 Status: TODO (owner decision 21.09: air ENTERS; EPA separate adapter stays; API + cards + checks by measured pattern only after a few days of measurement)

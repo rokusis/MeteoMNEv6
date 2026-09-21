@@ -143,12 +143,12 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Vazduh: 36 zapisa samo 09.09, merac nije vezan + strana bez var points.
   Odluka vlasnika 21.09: vazduh ULAZI posle merenja (DEC-042, TASK-162).
 
-## Otvoreno / sledece (20.09)
+## Otvoreno / sledece (21.09)
 
-1. Gasenje slusaca (kes za sluzenje ostaje) + nocni redji ritam po obrascu.
-2. Presuda mejlova 2-3 dana: D1 79% (reset 16.09) + CPU 1000+ od 13.09.
-3. Odluka vlasnika: vazduh (EPA) ulazi ili napolje, pa popravka EPA strane.
-4. Prva prava upotreba recenzenta na sledecoj rizicnoj izmeni.
+1. Danasnji procenat upisa uvece + sutrasnji CPU mejl (presuda dijete).
+2. Jutarnje ture ~08:50/11:30 i dnevno kasnjenje ispod 3 min.
+3. Ritam vazduha kroz par dana (meri od 21.09), vazduh ULAZI (DEC-042).
+4. Proces provere je sad zastita + vlasnik spoji (drugog modela nema).
 5. Finalni frontend tek kad backend stabilan.
 6. Token rok ~2026-10-08 — podsetiti na vreme.
 

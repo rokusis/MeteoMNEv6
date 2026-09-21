@@ -397,8 +397,11 @@ One 1-minute combined tick (bulk, then graphs, then synop watch, then
 numerical batches) plus one 10-minute tick (loggers and slow writers).
 Graphs trigger on moved snapshots with per-tick budgets (5 per tick since
 2026-09-20, was 10) and resume cursors. Numerical tours run 2 cities per
-tick (was 3). SYNOP watches densely around 07/14/21 terms. Numerical follows
-measured windows with cursor batches. See DEC-027, DEC-030, DEC-031, DEC-039.
+tick (was 3). SYNOP watches densely around 07/14/21 terms. Numerical checks run dense every 2 minutes around the clock (DEC-030 windows
+retired as check gates per DEC-036, kept only as diagnostic knowledge).
+Official runs dense by day, sparse at night per measured pattern (no night
+changes in 13 days). SYNOP watches densely around 07/14/21 terms. See
+DEC-027, DEC-030, DEC-031, DEC-036, DEC-039.
 
 Previous concept kept below for history:
 
