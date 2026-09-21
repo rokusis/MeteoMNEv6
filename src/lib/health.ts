@@ -1,5 +1,6 @@
 // Jedan pogled na zdravlje svih izvora. Samo cita postojece tragove,
 // ne dodaje poslove. Pragovi iz izmerenih ritmova (vidi DECISIONS).
+import { podgoricaLocal } from '../sources/zhms-aws/graphSchedule';
 export interface SourceHealth {
   source: string;
   state: 'ok' | 'stale' | 'unknown';
@@ -43,6 +44,13 @@ function stateOf(age: number | null, limitMin: number): 'ok' | 'stale' | 'unknow
   return age <= limitMin ? 'ok' : 'stale';
 }
 
+// Prag po terminima 07/14/21 lokalno: danju se ocekuje svez termin
+// (180 min tolerancije), nocu vazi zadnji termin sa 21h (720 min).
+export function synopLimitMin(nowMs: number = Date.now()): number {
+  const { hour } = podgoricaLocal(nowMs);
+  return hour >= 6 && hour < 22 ? 180 : 720;
+}
+
 export async function checkHealth(db: D1Database, nowMs: number = Date.now()): Promise<{ status: string; sources: SourceHealth[] }> {
   const out: SourceHealth[] = [];
 
@@ -61,7 +69,7 @@ export async function checkHealth(db: D1Database, nowMs: number = Date.now()): P
       synopMeta = `termin ${r.meta_hour ?? '?'}h ${r.meta_day ?? ''}`.trim();
     }
   } catch {}
-  out.push({ source: 'synop', state: stateOf(synopAge, 14 * 60), checkedAgeMin: synopAge, changedAgeMin: synopAge, detail: synopMeta || 'nema termina' });
+  out.push({ source: 'synop', state: stateOf(synopAge, synopLimitMin(nowMs)), checkedAgeMin: synopAge, changedAgeMin: synopAge, detail: synopMeta || 'nema termina' });
 
   const off = await logAges(db, 'official_log', nowMs);
   out.push({

@@ -38,4 +38,14 @@ describe('parseAir', () => {
   it('baca kad je niz prazan', () => {
     expect(() => parseAir('<script>var points = [];</script>')).toThrow('empty air');
   });
+  it('prazne koordinate su null, ne nula', () => {
+    const page =
+      `<html><body><script>var points = [` +
+      `["Bojana test", "", "", "https://www.epa.org.me/vazduh/stanica/99", "pin-x", "${TIP_BAR}"]` +
+      `];</script></body></html>`;
+    const s = parseAir(page);
+    expect(s.length).toBe(1);
+    expect(s[0].lat).toBe(null);
+    expect(s[0].lon).toBe(null);
+  });
 });
