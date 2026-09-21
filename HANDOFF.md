@@ -141,7 +141,7 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Numericke ture done za oba modela; /api/numerical-status javan.
 - Sneg 0 (ispravno), Pošćenje crtice = izvor nema podatak (ispravno).
 - Vazduh: 36 zapisa samo 09.09, merac nije vezan + strana bez var points.
-  Odluka vlasnika ceka da li ulazi.
+  Odluka vlasnika 21.09: vazduh ULAZI posle merenja (DEC-042, TASK-162).
 
 ## Otvoreno / sledece (20.09)
 

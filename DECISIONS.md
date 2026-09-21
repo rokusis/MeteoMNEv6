@@ -588,3 +588,16 @@ Consequence:
 
 Date: 2026-09-21
 Proof: commit 600cf3b, CI+Deploy green.
+
+---
+
+# DEC-042 — Air enters the product after measurement
+
+Decision:
+Air quality (EPA, separate source epa.org.me) enters the app. First measurement, then serving by the measured pattern.
+
+Why:
+Owner decision 2026-09-21. Air is the only source outside meteo.co.me and needs its own adapter, window and display.
+
+Consequence:
+After a few days of pattern: air API + cards like the rest, checks by pattern (hourly-like). Until then measurement only, nothing shown to users.

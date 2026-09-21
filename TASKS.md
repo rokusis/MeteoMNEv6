@@ -598,7 +598,7 @@ Status: DONE (zero manual commands per change)
 Status: DONE (per-source age, ok/stale/unknown)
 
 ## TASK-158 — 48h measurement loggers (official/hydro/sea/air)
-Status: DONE COLLECTING (official 345 rows 07-20.09, hydro 193, sea 145, numerical 4715 rows 04-20.09, air 36 rows only 09.09; listeners did their job, switch-off pending; air/EPA decision pending with owner)
+Status: DONE COLLECTING (official 345 rows 07-20.09, hydro 193, sea 145, numerical 4715 rows 04-20.09; air wired 21.09, measuring; owner decision 21.09: air ENTERS after measurement)
 
 ## TASK-159 — 48h pattern reading and windows
 Status: DONE READING 2026-09-20 (official day-only 05-19 local, hydro changes almost every check, sea every 1-2 days, numerical a3km ~08:50 + e3km ~11:30 local daily; air stale since 09.09; windows implementation pending)
@@ -608,6 +608,9 @@ Status: IN PROGRESS (numerical logger write-on-change 66d022b; saveStations dual
 
 ## TASK-161 — Reviewer first use
 Status: TODO (prompt ready per DEC-034)
+
+## TASK-162 — Air API and display (after pattern)
+Status: TODO (owner decision 21.09: air ENTERS; EPA separate adapter stays; API + cards + checks by measured pattern only after a few days of measurement)
 
 ---
 
