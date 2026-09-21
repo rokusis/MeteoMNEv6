@@ -2,8 +2,8 @@ export interface AirValue { pollutant: string; valueRaw: string }
 export interface AirStation {
   id: string;
   name: string;
-  lat: number;
-  lon: number;
+  lat: number | null;
+  lon: number | null;
   pin: string;
   dateRaw: string;
   values: AirValue[];
@@ -142,8 +142,10 @@ export function parseAir(src: string): AirStation[] {
     const f = splitFields(e);
     if (f.length < 6) continue;
     const name = unquote(f[0]);
-    const lat = Number(unquote(f[1]));
-    const lon = Number(unquote(f[2]));
+    const latRaw = unquote(f[1]);
+    const lonRaw = unquote(f[2]);
+    const lat = latRaw === '' ? NaN : Number(latRaw);
+    const lon = lonRaw === '' ? NaN : Number(lonRaw);
     const url = unquote(f[3]);
     const pin = unquote(f[4]);
     const tip = unquote(f[5]);
@@ -151,11 +153,14 @@ export function parseAir(src: string): AirStation[] {
     if (!name || !idM) continue;
     const { dateRaw, values } = parseTooltip(tip);
     if (!dateRaw) continue;
+    // Prazno nije nula: tacka bez koordinata se ne crta (isti model kao Bojana).
+    const latN = Number.isFinite(lat) ? lat : null;
+    const lonN = Number.isFinite(lon) ? lon : null;
     out.push({
       id: idM[1],
       name,
-      lat: Number.isFinite(lat) ? lat : 0,
-      lon: Number.isFinite(lon) ? lon : 0,
+      lat: latN,
+      lon: lonN,
       pin,
       dateRaw,
       values,
