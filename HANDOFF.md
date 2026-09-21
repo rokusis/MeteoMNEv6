@@ -31,6 +31,31 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Otvoreno: gasenje slusaca (kes ostaje), nocni redji ritam, presuda mejlova
   (D1 79% reset 16.09 + CPU 1000+ od 13.09), pa frontend tek kad stabilno.
 
+## Dopuna 2026-09-21 nocu (zastita + vidljivost + stednja + vazduh + sken)
+
+- Glavna grana zasticena: direktno slanje blokirano, ide preko pomocne grane
+  + vlasnik spoji na dugme. Prvo spajanje (PR #1, snop upisa) proslo uz
+  jednom bypass jer je ostala i kvacica za odobrenje; vlasnik je sklanja.
+- Vidljivost: uspeh reka i mora sad brise staru gresku (06fad7e, 190b7b6).
+  Greske 21:20 bile stare poruke, spor krug 22:31/23:51 prosao dobro.
+- Stednja: heartbeat belezski jednom dnevno u ponoc (54249e3); zvanicna nocu
+  18-02 UTC na pola sata, danju 2 min (a3d638d + testovi).
+- Vazduh vezan u spori krug na 10 min (fcb41eb): od 01:01 stize 11 novih
+  zapisa, ukupno 47. Sad javlja 9 stanica (bilo 10). Ritam lici na sat vremena.
+- Veliki sken popravljen (600cf3b): spisak stanica citao celu tabelu grafova
+  147k redova po otvaranju (skokovi 567k/572k). Sad po stanici preko indeksa.
+  Tvrdnja Cloudflare pomocnika da je kriv upit od 116 redova je pogresna
+  (izmereno: stanice 79, merenja 37, grafovi 147316).
+- Snop upisa spozen (d0f664e preko PR #1): stanice+merenja u serijama po 50.
+- Brojke Cloudflare 14-21.09: upisi 53-84%/dan (najgori 20.09), citanje skok
+  13-15% (sken iznad, popravljen), CPU prosek 18ms prema limitu 10ms, puca
+  svaki dan. Dva obrasca: brzo pucanje 06:00/13:00 UTC (izvor nedostupan,
+  mali CPU) i sporo uvece (parsiranje+upisi). Gubitka podataka nema
+  (zadnje dobro + nastavak od sacuvanog mesta).
+- Otvoreno: danasnji procenat upisa uvece, jutarnje ture ~08:50/11:30 i
+  dnevno kasnjenje ispod 3 min, ritam vazduha kroz par dana + odluka ulazi
+  ili ne, pa papir za prednji deo (kartica + grafovi 24h/7d/30d/max).
+
 ## Vlasnik: ko je i kako se radi s njim (obavezno)
 
 - Pocetnik sa jakom intuicijom; tehniku ne zna. Srpski, latinica, prosto i
@@ -51,7 +76,8 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 ## Kako se radi (okruzenje, prava, proces)
 
 - Radna kopija OVDE: `C:\Users\ADMINI~1\AppData\Local\Temp\opencode\fresh-MeteoMNEv6`
-  (svez klon na Windows masini vlasnika, 20.09, head d318ed6). Push ide direktno odavde.
+  (svez klon na Windows masini vlasnika, 20-21.09, head d0f664e). Na pomocnu granu
+  rev/* pa vlasnik spoji; direktno blokirano zastitom.
 - GitHub token (repo-scoped) stoji SAMO u remote URL-u tog klona + trajno u
   masinskim promenljivama za Cloudflare (nikad u chat). Revoke + brisanje kad vlasnik kaze.
 - Codespace (`/workspaces/MeteoMNEv6`) se ne koristi za kod. Pre bilo kakvog

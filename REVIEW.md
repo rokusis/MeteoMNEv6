@@ -359,3 +359,21 @@ Scope: grafici 10->5 po minutu, ture 3->2 grada (DEC-039), test uskladjen
 Commit: 22503e0 / d318ed6
 Findings: prvo CI pao na testu starog broja (ocekivano), popravljen test; posle CI+Deploy success; zdravlje zeleno svuda, kasnjenje 2-3 min stoji
 Result: PASS
+
+---
+## REVIEW-036 — vidljivost + stednja + vazduh (noc 20-21.09)
+Date: 2026-09-21
+Reviewer: AI agent + vlasnik (direktno)
+Scope: noteSuccess hydro/sea, heartbeat dnevno, zvanicna nocu 30min, air sentinel vezan
+Commit: 06fad7e / 190b7b6 / 54249e3 / a3d638d / fcb41eb
+Findings: CI+Deploy success sve; hydro/sea stare greske obrisane uzivo (uspeh 23:51); air 11 novih zapisa od 01:01 (9 stanica); zvanicna nocna kapija + testovi uskladjeni
+Result: PASS
+
+---
+## REVIEW-037 — sken liste + snop upisa (prvi merge kroz zastitu)
+Date: 2026-09-21
+Reviewer: AI agent + vlasnik (direktno, PR #1)
+Scope: loadLatestParams po stanici preko indeksa (DEC-041), batch upisi po 50 (DEC-040)
+Commit: 600cf3b / 4fdb7e2 merged as d0f664e
+Findings: sken 147k po otvaranju dokazan merenjem (Cloudflare tvrdnja o 116 redova opovrgnuta); CI green; zastita radi - pomocna grana + bypass za kvacicu odobrenja
+Result: PASS
