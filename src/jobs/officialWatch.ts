@@ -1,4 +1,4 @@
-import { fetchOfficialLive } from '../sources/zhms-official-forecast/liveOfficial';
+import { fetchOfficialLive, saveOfficial, loadOfficial, shouldPersistOfficial } from '../sources/zhms-official-forecast/liveOfficial';
 import { officialFingerprint } from './officialLogger';
 
 // Gusta straza za zvanicnu prognozu: danju na svaka 2 minuta, nocu na pola
@@ -44,6 +44,19 @@ export async function runOfficialTick(db: D1Database, nowMs: number): Promise<{ 
             .slice(0, 300),
         )
         .run();
+    }
+    // Straza je videla promenu: odmah osvezi i kes za serviranje da korisnik
+    // ne ceka 10-minutni krug. Guard je u shouldPersistOfficial.
+    if (changed) {
+      try {
+        let prevCache: any = null;
+        try {
+          prevCache = await loadOfficial(db);
+        } catch {}
+        if (shouldPersistOfficial(prevCache, o)) {
+          await saveOfficial(db, o);
+        }
+      } catch {}
     }
     return { checked: true, changed };
   } catch (e: any) {
