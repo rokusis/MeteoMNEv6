@@ -456,7 +456,7 @@ export default {
         try {
           if (env.DB) {
             const { loadLatestParams } = await import('./lib/timeseriesDb');
-            const latest = await loadLatestParams(env.DB as any, ['H', 'P', 'GR']);
+            const latest = await loadLatestParams(env.DB as any, ['H', 'P', 'GR'], stations.map((o: any) => o.stationId));
             stations = stations.map((o: any) => {
               const m = latest.get(o.stationId) ?? {};
               return {

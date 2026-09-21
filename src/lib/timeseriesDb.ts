@@ -36,9 +36,31 @@ export async function loadTimeseries(db: D1Database, stationId: string, param: s
   return (results as any[]).map(r=> ({ts:r.ts, value:r.value})).reverse();
 }
 
-export async function loadLatestParams(db: D1Database, params: string[]): Promise<Map<string, Record<string, { ts: number; value: number }>>> {
+export async function loadLatestParams(db: D1Database, params: string[], stationIds?: string[]): Promise<Map<string, Record<string, { ts: number; value: number }>>> {
   const out = new Map<string, Record<string, { ts: number; value: number }>>();
   if (!params.length) return out;
+  // Sa spiskom stanica: po 1 indeksni upit (LIMIT 1) umesto skeniranja cele
+  // tabele (147k redova). Bez spiska: stari prozorski upit (istorija/testovi).
+  if (stationIds && stationIds.length) {
+    const stmts = [];
+    for (const sid of stationIds) {
+      for (const p of params) {
+        stmts.push(db.prepare(`SELECT station_id, param, value, ts FROM station_timeseries WHERE station_id=? AND param=? ORDER BY ts DESC LIMIT 1`).bind(sid, p));
+      }
+    }
+    const resps: any[] = typeof (db as any).batch === 'function'
+      ? await (db as any).batch(stmts)
+      : await (async () => { const r = []; for (const s of stmts) r.push(await (s as any).all()); return r; })();
+    for (const resp of resps) {
+      for (const r of (resp?.results ?? []) as any[]) {
+        const rec = out.get(r.station_id) ?? {};
+        const cur = rec[r.param];
+        if (!cur || r.ts > cur.ts) rec[r.param] = { ts: r.ts, value: r.value };
+        out.set(r.station_id, rec);
+      }
+    }
+    return out;
+  }
   const placeholders = params.map(() => '?').join(',');
   const { results } = await db.prepare(
     `SELECT station_id, param, value, ts FROM (
