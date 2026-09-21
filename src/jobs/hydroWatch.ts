@@ -16,7 +16,7 @@ export async function runHydroTick(db: D1Database, nowMs: number): Promise<{ che
   if (!hydroWatchOpen(nowMs)) return { checked: false, changed: false };
   const now = new Date(nowMs).toISOString();
   try {
-    const r = await fetchHydroLive();
+    const r = await fetchHydroLive(db);
     const fp = hydroFingerprint(r.stations, r.observations);
     let prev: string | null = null;
     try {
