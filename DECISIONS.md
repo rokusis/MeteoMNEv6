@@ -556,3 +556,35 @@ Queue drains slower (~8 min full drain) but moved snapshots go first so the 2-3 
 
 Date: 2026-09-20
 Proof: commits 22503e0 + d318ed6, CI+Deploy green, live health all ok.
+
+---
+
+# DEC-040 — Batch writes with single-write fallback
+
+Decision:
+Stations and observations persist in batches of 50 instead of row-by-row; on batch error fall back to single writes.
+
+Why:
+The 1-minute tick died mid-run (CPU 1000+ mails/day, 18ms average vs 10ms limit); dozens of single D1 roundtrips per tick wasted CPU.
+
+Consequence:
+Fewer roundtrips, faster tick. Same data, same guards (dual-shape, coord-less skip). First merge through branch protection (PR #1).
+
+Date: 2026-09-21
+Proof: commit 4fdb7e2 merged as d0f664e, CI green.
+
+---
+
+# DEC-041 — List reads per station through index, never whole-table scan
+
+Decision:
+The station list reads latest H/P/GR per station with LIMIT 1 through the (station_id, param, ts) index instead of one window query over the whole 147k-row table.
+
+Why:
+Every list open scanned all 147k timeseries rows; a few opens in 5 minutes made the 567k/572k rows-read spikes. The Cloudflare assistant blamed a 116-row JOIN instead (disproven by measurement: stations 79, observations 37).
+
+Consequence:
+~100 rows read per list open instead of 147k. Old 2-argument path kept for tests/history.
+
+Date: 2026-09-21
+Proof: commit 600cf3b, CI+Deploy green.
