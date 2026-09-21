@@ -591,6 +591,38 @@ Proof: commit 600cf3b, CI+Deploy green.
 
 ---
 
+# DEC-043 — Official forecast served from database
+
+Decision:
+Official forecast has official_cache served DB-first: 10-minute writer plus watch refresh on change plus guarded route. No more request-time live fetch as the primary path.
+
+Why:
+Review found official as the only source outside the cron-writer to DB to users model; every cache miss hit ZHMS directly and freshness depended on user traffic.
+
+Consequence:
+Users read the base; cold-start live fallback stays per DEC-026. Migration 0019.
+
+Date: 2026-09-21
+Proof: commits 8ed1cdc + f51611d, CI+Deploy green, live titles for 22/23.09 from DB.
+
+---
+
+# DEC-044 — Schema guard blocks silent source redesign
+
+Decision:
+AWS and hydro check raw shape (rows x columns per var block) before persisting. A different shape throws twice (previous-good served), the third identical new shape becomes the new normal. One-off garbage never passes.
+
+Why:
+TASK-121: positional parsers would return plausible but wrong data on a source redesign - worse than an error.
+
+Consequence:
+New table schema_state (migration 0020). Fake DBs in tests persist shape separately like production.
+
+Date: 2026-09-21
+Proof: commits b333318 + 08a4416 + 5a06306 + 9335a68, CI+Deploy green.
+
+---
+
 # DEC-042 — Air enters the product after measurement
 
 Decision:
