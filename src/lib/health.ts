@@ -74,7 +74,9 @@ export async function checkHealth(db: D1Database, nowMs: number = Date.now()): P
   const off = await logAges(db, 'official_log', nowMs);
   out.push({
     source: 'official',
-    state: stateOf(off.checked, 30),
+    // Belezska pise samo na promenu + jednom dnevno; pravu smrt javljaju
+    // greske u redu i markeri kruga, pa je granica 25 sati.
+    state: stateOf(off.checked, 1500),
     checkedAgeMin: off.checked,
     changedAgeMin: off.changed,
     detail: off.changed == null ? 'nema promene jos' : `zadnja promena pre ${off.changed} min`,
@@ -83,7 +85,8 @@ export async function checkHealth(db: D1Database, nowMs: number = Date.now()): P
   const hyd = await logAges(db, 'hydro_log', nowMs);
   out.push({
     source: 'hydro',
-    state: stateOf(hyd.checked, 30),
+    // Isto kao zvanicna: belezska retka, smrt se vidi u greskama i markerima.
+    state: stateOf(hyd.checked, 1500),
     checkedAgeMin: hyd.checked,
     changedAgeMin: hyd.changed,
     detail: hyd.changed == null ? 'nema promene jos' : `zadnja promena pre ${hyd.changed} min`,
@@ -92,7 +95,8 @@ export async function checkHealth(db: D1Database, nowMs: number = Date.now()): P
   const sea = await logAges(db, 'sea_snow_log', nowMs);
   out.push({
     source: 'sea-snow',
-    state: stateOf(sea.checked, 30),
+    // Isto kao zvanicna: belezska retka, smrt se vidi u greskama i markerima.
+    state: stateOf(sea.checked, 1500),
     checkedAgeMin: sea.checked,
     changedAgeMin: sea.changed,
     detail: sea.changed == null ? 'nema promene jos' : `zadnja promena pre ${sea.changed} min`,
