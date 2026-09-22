@@ -1,12 +1,10 @@
 import { fetchHydroLive, saveHydro } from '../sources/hydro/liveHydro';
 import { hydroFingerprint } from './hydroLogger';
 
-// Gusta straza za hidrologiju: promene su u svim satima (00,01,08,12,13,
-// 15,16,17,19,20,21,23 po merenju 07-09.09.), pa nema dnevnog prozora.
-// Provera na svaka 2 minuta ceo dan daje kasnjenje max 2-3 minuta.
-// 10-minutni sentinel je ugasen jer ga ova straza potpuno zamenjuje.
+// Ritam: na svakih 5 minuta (odluka vlasnika 22.09: reke smeju do 5 min
+// kasnjenja; glavno ostaje ispod 3 min). 10-minutni pisac je rezerva.
 export function hydroWatchOpen(nowMs: number): boolean {
-  return new Date(nowMs).getUTCMinutes() % 2 === 0;
+  return new Date(nowMs).getUTCMinutes() % 5 === 0;
 }
 
 // Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku

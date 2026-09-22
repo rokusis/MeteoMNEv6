@@ -1,4 +1,4 @@
-# DECISIONS
+﻿# DECISIONS
 ## Montenegro Weather App — durable project decisions
 
 Rule: this file records WHY the project chose a direction. New AIs must read it before proposing a contradictory architecture.
@@ -608,7 +608,6 @@ Proof: commits 8ed1cdc + f51611d, CI+Deploy green, live titles for 22/23.09 from
 ---
 
 # DEC-044 — Schema guard blocks silent source redesign
-
 Decision:
 AWS and hydro check raw shape (rows x columns per var block) before persisting. A different shape throws twice (previous-good served), the third identical new shape becomes the new normal. One-off garbage never passes.
 
@@ -633,3 +632,17 @@ Owner decision 2026-09-21. Air is the only source outside meteo.co.me and needs 
 
 Consequence:
 After a few days of pattern: air API + cards like the rest, checks by pattern (hourly-like). Until then measurement only, nothing shown to users.
+
+
+---
+
+# DEC-045 — Split freshness goal: main 3 min, graphs and rivers 5 min
+
+Decision:
+Temperature, wind and rain stay under 3 minutes. Humidity, pressure, sun graphs and rivers may lag up to 5 minutes (graphs every 5th minute, rivers every 5th minute, lag meter limit 8).
+
+Why:
+Owner decision 2026-09-22 (option 2). The free tier breaks on lively days; relaxing the expensive secondary sources saves writes while the headline goal stands.
+
+Consequence:
+Graph and river serving still DB-first with previous-good; lag meter proves the 5-minute bound live.
