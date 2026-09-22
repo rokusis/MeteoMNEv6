@@ -229,8 +229,12 @@ export default {
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
         } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
         try {
-          const { refreshDueGraphs } = await import('./jobs/graphRefresh');
-          if (env.DB) await refreshDueGraphs(env.DB as any);
+          // Grafici na svakih 5 minuta (odluka vlasnika 22.09: H/P/GR smeju
+          // do 5 min kasnjenja; sveze ide prvo). Glavni krug ostaje svaki minut.
+          if (new Date().getUTCMinutes() % 5 === 0) {
+            const { refreshDueGraphs } = await import('./jobs/graphRefresh');
+            if (env.DB) await refreshDueGraphs(env.DB as any);
+          }
         } catch(e){ console.error('graph refresh cron error', e); await noteError(env.DB, 'graph', e); }
         try {
           const { synopWatchOpen, refreshSynop } = await import('./sources/zhms-synop/liveSynop');

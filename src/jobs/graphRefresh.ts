@@ -9,8 +9,9 @@ import { saveSourceStatus } from '../db';
 // sveze (pomeren snimak) ide prvo pa se kasnjenje 2-3 min ne kvari, rep je ~8 min.
 export const GRAPH_REFRESH_LIMIT = 5;
 // Merac kasnjenja repa: pise se samo kad pokrivanje snimka kasni preko granice.
-// Po pravilu svezine granica je 3 minuta; tisina znaci da rep stize na vreme.
-export const GRAPH_LAG_LIMIT_MIN = 3;
+// Po odluci 22.09 grafici smeju do 5 min (glavno ostaje 3 min); tisina znaci
+// da rep stize na vreme. Granica 8 = ritam 5 min + mreza.
+export const GRAPH_LAG_LIMIT_MIN = 8;
 export function graphLagMin(nowMs: number, snapMs: number | null): number | null {
   if (snapMs == null) return null;
   return Math.round(((nowMs - snapMs) / 60000) * 10) / 10;
