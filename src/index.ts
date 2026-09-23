@@ -234,6 +234,16 @@ export default {
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
         } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
         try {
+          // Vazduh u 4-minutnom ritmu (odluka vlasnika: kasnjenje do ~4 min).
+          if (m4) {
+            const { refreshAir } = await import('./sources/epa-air/liveAir');
+            if (env.DB) {
+              const r = await refreshAir(env.DB as any);
+              if (r.updated) await noteSuccess(env.DB, 'air', 1);
+            }
+          }
+        } catch(e){ console.error('air tick error', e); await noteError(env.DB, 'air', e); }
+        try {
           // Grafici u 4-minutnom ritmu zajedno sa ostalim (DEC-046);
           // sveze ide prvo.
           if (m4) {
@@ -385,6 +395,9 @@ export default {
           const {results} = await env.DB.prepare(`SELECT checked_at, status, sea_count, snow_count FROM sea_snow_log ORDER BY checked_at DESC LIMIT 100`).all();
           return Response.json({ status:'ok', count: results.length, logs: results });
         } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
+      }
+      if (url.pathname === '/api/air') {
+        try { const { getAir }=await import('./sources/epa-air/liveAir'); const r=await getAir(env.DB as any); return Response.json({ status:'ok', fromCache:r.fromCache, fetchedAt:r.fetchedAt, count:r.stations.length, stations:r.stations }); } catch(e:any){ return Response.json({status:'error', message:String(e?.message??e)}, {status:500}); }
       }
       if (url.pathname === '/api/air-log') {
         try {
