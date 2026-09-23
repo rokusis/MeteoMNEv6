@@ -1,13 +1,10 @@
 import { fetchSeaSnowLive, saveSeaSnow } from '../sources/zhms-sea-snow/liveSeaSnow';
 import { seaSnowFingerprint } from './seaSnowLogger';
 
-// Gusta straza za more/sneg: provera na svaka 2 minuta ceo dan.
-// Merenje 07-09.09. pokazalo ~1 promenu dnevno ujutru (~08:30 UTC),
-// ali pravilo svezine trazi puno radno vreme pa prozor sluzi samo kao
-// dijagnostika, ne kao kapija. Sneg dolazi gratis u istom odgovoru.
-// 10-minutni sentinel je ugasen jer ga ova straza potpuno zamenjuje.
+// Ritam 4 minuta (odluka vlasnika 22.09, DEC-046).
+// 10-minutni pisac je rezerva.
 export function seaSnowWatchOpen(nowMs: number): boolean {
-  return new Date(nowMs).getUTCMinutes() % 2 === 0;
+  return new Date(nowMs).getUTCMinutes() % 4 === 0;
 }
 
 // Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku
