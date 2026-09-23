@@ -1,10 +1,10 @@
 import { fetchHydroLive, saveHydro } from '../sources/hydro/liveHydro';
 import { hydroFingerprint } from './hydroLogger';
 
-// Ritam: na svakih 5 minuta (odluka vlasnika 22.09: reke smeju do 5 min
-// kasnjenja; glavno ostaje ispod 3 min). 10-minutni pisac je rezerva.
+// Ritam 4 minuta (odluka vlasnika 22.09, DEC-046).
+// 10-minutni pisac je rezerva.
 export function hydroWatchOpen(nowMs: number): boolean {
-  return new Date(nowMs).getUTCMinutes() % 5 === 0;
+  return new Date(nowMs).getUTCMinutes() % 4 === 0;
 }
 
 // Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku

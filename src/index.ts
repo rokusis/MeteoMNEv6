@@ -207,9 +207,14 @@ export default {
         await markTickStart(env.DB, tickSource);
       } catch {}
       if (event.cron === "* * * * *") {
+        // Ritam 4 minuta (odluka vlasnika 22.09, DEC-046): tezak posao samo
+        // svaki cetvrti minut, kasnjenje do ~4 min. Brojke i nebo ostaju gusto.
+        const m4 = new Date().getUTCMinutes() % 4 === 0;
         try {
-          const { fetchAndPersist } = await import('./sources/zhms-aws/live');
-          if (env.DB) await fetchAndPersist(env.DB as any);
+          if (m4) {
+            const { fetchAndPersist } = await import('./sources/zhms-aws/live');
+            if (env.DB) await fetchAndPersist(env.DB as any);
+          }
         } catch(e){ console.error('bulk error', e); await noteError(env.DB, 'aws', e); }
 
         try {
@@ -229,9 +234,9 @@ export default {
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
         } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
         try {
-          // Grafici na svakih 5 minuta (odluka vlasnika 22.09: H/P/GR smeju
-          // do 5 min kasnjenja; sveze ide prvo). Glavni krug ostaje svaki minut.
-          if (new Date().getUTCMinutes() % 5 === 0) {
+          // Grafici u 4-minutnom ritmu zajedno sa ostalim (DEC-046);
+          // sveze ide prvo.
+          if (m4) {
             const { refreshDueGraphs } = await import('./jobs/graphRefresh');
             if (env.DB) await refreshDueGraphs(env.DB as any);
           }

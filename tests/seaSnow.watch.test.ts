@@ -27,12 +27,12 @@ function fakeDb() {
   } as any;
 }
 
-describe('more/sneg gusta straza', () => {
+describe('more/sneg straza na 4 minuta', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-  it('kapija: parni minut uvek, neparni nikad', () => {
-    expect(seaSnowWatchOpen(T(8, 30))).toBe(true);
+  it('kapija: deljiv sa 4 uvek, ostalo nikad', () => {
+    expect(seaSnowWatchOpen(T(8, 32))).toBe(true);
     expect(seaSnowWatchOpen(T(3, 0))).toBe(true);
     expect(seaSnowWatchOpen(T(8, 31))).toBe(false);
   });
@@ -47,11 +47,11 @@ describe('more/sneg gusta straza', () => {
   it('upis samo na promenu, heartbeat jednom dnevno u ponoc', async () => {
     const db = fakeDb();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE1, { status: 200 }) as any);
-    const r1 = await runSeaSnowTick(db, T(8, 30));
+    const r1 = await runSeaSnowTick(db, T(8, 32));
     expect(r1).toEqual({ checked: true, changed: true });
     expect(db.rows[0].status).toBe('first');
-    // isto, nije pun sat -> bez upisa
-    const r2 = await runSeaSnowTick(db, T(8, 32));
+    // isto, nije ponoc -> bez upisa
+    const r2 = await runSeaSnowTick(db, T(8, 36));
     expect(r2).toEqual({ checked: true, changed: false });
     expect(db.rows.length).toBe(1);
     // isto, ponoc -> heartbeat
@@ -61,7 +61,7 @@ describe('more/sneg gusta straza', () => {
     expect(db.rows[1].status).toBe('same');
     // promena -> upis
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE2, { status: 200 }) as any);
-    const r4 = await runSeaSnowTick(db, T(9, 2));
+    const r4 = await runSeaSnowTick(db, T(9, 4));
     expect(r4).toEqual({ checked: true, changed: true });
     expect(db.rows[2].status).toBe('changed');
     // promena odmah osvezava i kes za serviranje

@@ -40,10 +40,10 @@ describe('hidro straza na 5 minuta', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-  it('kapija: deljiv sa 5 uvek, ostalo nikad', () => {
+  it('kapija: deljiv sa 4 uvek, ostalo nikad', () => {
     expect(hydroWatchOpen(T(0, 0))).toBe(true);
     expect(hydroWatchOpen(T(3, 17))).toBe(false);
-    expect(hydroWatchOpen(T(23, 55))).toBe(true);
+    expect(hydroWatchOpen(T(23, 56))).toBe(true);
     expect(hydroWatchOpen(T(12, 51))).toBe(false);
   });
   it('neparni minut ne dira mrezu', async () => {
@@ -57,11 +57,11 @@ describe('hidro straza na 5 minuta', () => {
   it('upis samo na promenu, heartbeat jednom dnevno u ponoc', async () => {
     const db = fakeDb();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE1, { status: 200 }) as any);
-    const r1 = await runHydroTick(db, T(0, 5));
+    const r1 = await runHydroTick(db, T(0, 4));
     expect(r1).toEqual({ checked: true, changed: true });
     expect(db.rows[0].status).toBe('first');
     // isto, nije ponoc -> bez upisa
-    const r2 = await runHydroTick(db, T(0, 10));
+    const r2 = await runHydroTick(db, T(0, 8));
     expect(r2).toEqual({ checked: true, changed: false });
     expect(db.rows.length).toBe(1);
     // isto, ponoc -> heartbeat
@@ -71,7 +71,7 @@ describe('hidro straza na 5 minuta', () => {
     expect(db.rows[1].status).toBe('same');
     // promena -> upis
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE2, { status: 200 }) as any);
-    const r4 = await runHydroTick(db, T(1, 5));
+    const r4 = await runHydroTick(db, T(1, 4));
     expect(r4).toEqual({ checked: true, changed: true });
     expect(db.rows[2].status).toBe('changed');
     // promena odmah osvezava i kes za serviranje

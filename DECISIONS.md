@@ -646,3 +646,17 @@ Owner decision 2026-09-22 (option 2). The free tier breaks on lively days; relax
 
 Consequence:
 Graph and river serving still DB-first with previous-good; lag meter proves the 5-minute bound live.
+
+
+---
+
+# DEC-046 — 4-minute rhythm for everything heavy
+
+Decision:
+Bulk, graphs, hydro, sea and daytime official run every 4th minute. Numerical sentinel and synop windows stay dense (cheap, and beating the bound is allowed). Promise: lag up to ~4 minutes.
+
+Why:
+Owner decision 2026-09-22: nicer than 5 minutes for users, still ~4x less heavy work than every minute. Free tier kept breaking on lively days and there is no money for paid.
+
+Consequence:
+Tests use multiples of 4. Lag meter limit stays 8 (rhythm 4 + network + source slowness).
