@@ -429,7 +429,7 @@ This adapter is independent. Do not replace AWS with SYNOP globally.
 ---
 
 ## TASK-081 — SYNOP regional adapter
-Status: TODO
+Status: CANCELLED 2026-09-24 (owner decision: neighboring-country measurements not needed in the app)
 
 Source:
 `/synopT2.php`
