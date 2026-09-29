@@ -202,20 +202,38 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     try {
       const tickSource = event.cron === "* * * * *" ? 'tick-minute' : 'tick-10min';
+      // FAZA A (merenje 24h, odluka vlasnika): samo glavno svaki minut, sve
+      // ostalo ugaseno. Posle merenja se vraca nazad, ne ostaje.
+      const PHASE_A_AWS_ONLY = true;
       try {
         const { markTickStart } = await import('./lib/tick');
         await markTickStart(env.DB, tickSource);
       } catch {}
+      if (PHASE_A_AWS_ONLY && tickSource === 'tick-10min') {
+        try {
+          const { markTickEnd } = await import('./lib/tick');
+          await markTickEnd(env.DB, tickSource);
+        } catch {}
+        return;
+      }
       if (event.cron === "* * * * *") {
         // Ritam 4 minuta (odluka vlasnika 22.09, DEC-046): tezak posao samo
         // svaki cetvrti minut, kasnjenje do ~4 min. Brojke i nebo ostaju gusto.
-        const m4 = new Date().getUTCMinutes() % 4 === 0;
+        // FAZA A: samo glavno svaki minut radi merenja.
+        const m4 = PHASE_A_AWS_ONLY ? true : new Date().getUTCMinutes() % 4 === 0;
         try {
           if (m4) {
             const { fetchAndPersist } = await import('./sources/zhms-aws/live');
             if (env.DB) await fetchAndPersist(env.DB as any);
           }
         } catch(e){ console.error('bulk error', e); await noteError(env.DB, 'aws', e); }
+        if (PHASE_A_AWS_ONLY) {
+          try {
+            const { markTickEnd } = await import('./lib/tick');
+            if (new Date().getUTCMinutes() % 10 === 0) await markTickEnd(env.DB, 'tick-minute');
+          } catch {}
+          return;
+        }
 
         try {
           const { runHydroTick } = await import('./jobs/hydroWatch');
