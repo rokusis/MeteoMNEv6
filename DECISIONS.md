@@ -660,3 +660,17 @@ Owner decision 2026-09-22: nicer than 5 minutes for users, still ~4x less heavy 
 
 Consequence:
 Tests use multiples of 4. Lag meter limit stays 8 (rhythm 4 + network + source slowness).
+
+
+---
+
+# DEC-047 — 3-minute rhythm for heavy work
+
+Decision:
+Bulk, graphs, hydro, sea, daytime official and air run every 3rd minute. Official stays sparse at night, numerical sentinel and synop windows stay dense. Promise: lag up to ~3 minutes.
+
+Why:
+Owner decision: phase A proved bulk alone every minute exceeds 100k/day, and 4 minutes felt too slow for users. 3 minutes is the balance point to verify.
+
+Consequence:
+Tests use multiples of 3. Lag meter limit stays 8. Verify with a full clean day.

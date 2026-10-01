@@ -202,38 +202,20 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     try {
       const tickSource = event.cron === "* * * * *" ? 'tick-minute' : 'tick-10min';
-      // FAZA A (merenje 24h, odluka vlasnika): samo glavno svaki minut, sve
-      // ostalo ugaseno. Posle merenja se vraca nazad, ne ostaje.
-      const PHASE_A_AWS_ONLY = true;
       try {
         const { markTickStart } = await import('./lib/tick');
         await markTickStart(env.DB, tickSource);
       } catch {}
-      if (PHASE_A_AWS_ONLY && tickSource === 'tick-10min') {
-        try {
-          const { markTickEnd } = await import('./lib/tick');
-          await markTickEnd(env.DB, tickSource);
-        } catch {}
-        return;
-      }
       if (event.cron === "* * * * *") {
-        // Ritam 4 minuta (odluka vlasnika 22.09, DEC-046): tezak posao samo
-        // svaki cetvrti minut, kasnjenje do ~4 min. Brojke i nebo ostaju gusto.
-        // FAZA A: samo glavno svaki minut radi merenja.
-        const m4 = PHASE_A_AWS_ONLY ? true : new Date().getUTCMinutes() % 4 === 0;
+        // Ritam 3 minuta (odluka vlasnika, DEC-047): tezak posao samo svaki
+        // treci minut, kasnjenje do ~3 min. Brojke i nebo ostaju gusto.
+        const m3 = new Date().getUTCMinutes() % 3 === 0;
         try {
-          if (m4) {
+          if (m3) {
             const { fetchAndPersist } = await import('./sources/zhms-aws/live');
             if (env.DB) await fetchAndPersist(env.DB as any);
           }
         } catch(e){ console.error('bulk error', e); await noteError(env.DB, 'aws', e); }
-        if (PHASE_A_AWS_ONLY) {
-          try {
-            const { markTickEnd } = await import('./lib/tick');
-            if (new Date().getUTCMinutes() % 10 === 0) await markTickEnd(env.DB, 'tick-minute');
-          } catch {}
-          return;
-        }
 
         try {
           const { runHydroTick } = await import('./jobs/hydroWatch');
@@ -252,8 +234,8 @@ export default {
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
         } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
         try {
-          // Vazduh u 4-minutnom ritmu (odluka vlasnika: kasnjenje do ~4 min).
-          if (m4) {
+          // Vazduh u 3-minutnom ritmu zajedno sa ostalim.
+          if (m3) {
             const { refreshAir } = await import('./sources/epa-air/liveAir');
             if (env.DB) {
               const r = await refreshAir(env.DB as any);
@@ -262,9 +244,9 @@ export default {
           }
         } catch(e){ console.error('air tick error', e); await noteError(env.DB, 'air', e); }
         try {
-          // Grafici u 4-minutnom ritmu zajedno sa ostalim (DEC-046);
+          // Grafici u 3-minutnom ritmu zajedno sa ostalim;
           // sveze ide prvo.
-          if (m4) {
+          if (m3) {
             const { refreshDueGraphs } = await import('./jobs/graphRefresh');
             if (env.DB) await refreshDueGraphs(env.DB as any);
           }
