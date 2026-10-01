@@ -1,14 +1,14 @@
 import { fetchOfficialLive, saveOfficial, loadOfficial, shouldPersistOfficial } from '../sources/zhms-official-forecast/liveOfficial';
 import { officialFingerprint } from './officialLogger';
 
-// Ritam 4 minuta danju (odluka vlasnika 22.09, DEC-046), nocu na pola sata.
+// Ritam 3 minuta danju (odluka vlasnika, DEC-047), nocu na pola sata.
 // Merenje 07-20.09: 0 promena 20-04 lokalno (18-02 UTC).
 export function officialWatchOpen(nowMs: number): boolean {
   const d = new Date(nowMs);
   const h = d.getUTCHours();
   const m = d.getUTCMinutes();
   if (h >= 18 || h < 2) return m % 30 === 0;
-  return m % 4 === 0;
+  return m % 3 === 0;
 }
 
 // Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku
