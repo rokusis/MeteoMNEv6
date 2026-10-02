@@ -202,21 +202,39 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     try {
       const tickSource = event.cron === "* * * * *" ? 'tick-minute' : 'tick-10min';
+      // FAZA AB (merenje, odluka vlasnika): samo glavno + grafici svaki minut,
+      // sve ostalo ugaseno. Ne paliti nista dok vlasnik ne kaze.
+      const PHASE_AB_AWS_GRAPH_ONLY = true;
       try {
         const { markTickStart } = await import('./lib/tick');
         await markTickStart(env.DB, tickSource);
       } catch {}
+      if (PHASE_AB_AWS_GRAPH_ONLY && tickSource === 'tick-10min') {
+        try {
+          const { markTickEnd } = await import('./lib/tick');
+          await markTickEnd(env.DB, tickSource);
+        } catch {}
+        return;
+      }
       if (event.cron === "* * * * *") {
         // Ritam 3 minuta (odluka vlasnika, DEC-047): tezak posao samo svaki
         // treci minut, kasnjenje do ~3 min. Brojke i nebo ostaju gusto.
-        const m3 = new Date().getUTCMinutes() % 3 === 0;
+        // FAZA AB: glavno + grafici svaki minut radi merenja.
+        const m3 = PHASE_AB_AWS_GRAPH_ONLY ? true : new Date().getUTCMinutes() % 3 === 0;
         try {
           if (m3) {
             const { fetchAndPersist } = await import('./sources/zhms-aws/live');
             if (env.DB) await fetchAndPersist(env.DB as any);
           }
         } catch(e){ console.error('bulk error', e); await noteError(env.DB, 'aws', e); }
+        if (PHASE_AB_AWS_GRAPH_ONLY) {
+          try {
+            const { markTickEnd } = await import('./lib/tick');
+            if (new Date().getUTCMinutes() % 10 === 0) await markTickEnd(env.DB, 'tick-minute');
+          } catch {}
+        }
 
+        if (!PHASE_AB_AWS_GRAPH_ONLY) {
         try {
           const { runHydroTick } = await import('./jobs/hydroWatch');
           if (env.DB) await runHydroTick(env.DB as any, Date.now());
@@ -243,18 +261,20 @@ export default {
             }
           }
         } catch(e){ console.error('air tick error', e); await noteError(env.DB, 'air', e); }
+        } // kraj FAZA AB preskakanja (sve osim glavnog i grafika)
         try {
-          // Grafici u 3-minutnom ritmu zajedno sa ostalim;
-          // sveze ide prvo.
+          // Grafici uvek uz glavno u fazi AB (merenje).
           if (m3) {
             const { refreshDueGraphs } = await import('./jobs/graphRefresh');
             if (env.DB) await refreshDueGraphs(env.DB as any);
           }
         } catch(e){ console.error('graph refresh cron error', e); await noteError(env.DB, 'graph', e); }
+        if (!PHASE_AB_AWS_GRAPH_ONLY) {
         try {
           const { synopWatchOpen, refreshSynop } = await import('./sources/zhms-synop/liveSynop');
           if (env.DB && synopWatchOpen(Date.now())) await refreshSynop(env.DB as any);
         } catch(e){ console.error('synop watch error', e); await noteError(env.DB, 'synop', e); }
+        } // kraj FAZA AB preskakanja (nebo)
       } else {
         const { logNumericalSentinel } = await import('./jobs/numericalLogger');
         if (env.DB) await logNumericalSentinel(env.DB as any);
