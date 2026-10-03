@@ -252,8 +252,9 @@ export default {
           if (env.DB) await runNumericalTick(env.DB as any, Date.now());
         } catch(e){ console.error('numerical tick error', e); await noteError(env.DB, 'numerical', e); }
         try {
-          // Vazduh u 3-minutnom ritmu zajedno sa ostalim.
-          if (m3) {
+          // Vazduh ugasen u fazi ABC (samo 7 stvari: T/vetar/kisa/vlaga/
+          // pritisak/udar/sunce). Pali se opet kad vlasnik kaze.
+          if (m3 && !PHASE_AB_AWS_GRAPH_ONLY) {
             const { refreshAir } = await import('./sources/epa-air/liveAir');
             if (env.DB) {
               const r = await refreshAir(env.DB as any);
