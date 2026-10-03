@@ -395,10 +395,10 @@ The frontend consumes these normalized endpoints.
 
 ---
 
-# 16. SCHEDULER (IMPLEMENTED 2026-09-08, DEC-029)
+# 16. SCHEDULER (IMPLEMENTED 2026-09-08, DEC-029; rhythm 3 min since DEC-047)
 
-One 1-minute combined tick (bulk, then graphs, then synop watch, then
-numerical batches) plus one 10-minute tick (loggers and slow writers).
+One 1-minute tick fires, but heavy work (bulk, graphs, hydro, sea, daytime
+official, air) runs only every 3rd minute (promise: lag up to ~3 min).
 Graphs trigger on moved snapshots with per-tick budgets (5 per tick since
 2026-09-20, was 10) and resume cursors. Numerical tours run 2 cities per
 tick (was 3). SYNOP watches densely around 07/14/21 terms. Numerical checks run dense every 2 minutes around the clock (DEC-030 windows

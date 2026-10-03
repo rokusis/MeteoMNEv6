@@ -441,10 +441,7 @@ Only implement fields whose semantics are sufficiently proven.
 # PHASE 9 — DAILY DATA
 
 ## TASK-090 — Daily aggregate adapter
-Status: TODO
-
-Source:
-`/Meteorologija/depese_dnevne.php`
+Status: TODO (owner decision 2026-10-03: compute from stored timeseries, no new source fetch; day = midnight-midnight local; old source-based plan dropped)
 
 Do not assign a definitive application meaning to unresolved `USN` until proven.
 

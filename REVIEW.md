@@ -395,3 +395,21 @@ Scope: schema_state + checkSchema AWS/hydro, 3 ista nova oblika = novo normalno 
 Commit: b333318 merged as ec3ec01, test fix 106b34b merged as 5a06306, hydro redosled 08a4416 merged as 9335a68
 Findings: prvo CI pao na 3 testa (lazne baze bez tabele oblika); popravljeno red bez otiska + odvojena memorija oblika; posle CI+Deploy success
 Result: PASS
+
+---
+## REVIEW-040 — ritam 3 minuta (PR #18)
+Date: 2026-10-03
+Reviewer: AI agent + vlasnik (direktno)
+Scope: bulk/grafici/reke/more/zvanicna/vazduh svaki 3. minut (DEC-047), testovi na deljivo sa 3
+Commit: c90740f merged as 808f73f
+Findings: CI+Deploy success iz prve; obecanje kasnjenja ~3 min
+Result: PASS
+
+---
+## REVIEW-041 — faze kapaciteta A/AB/ABC (PR #19 + #20)
+Date: 2026-10-03
+Reviewer: AI agent + vlasnik (direktno)
+Scope: faza A samo glavno svaki minut, faza AB +grafici+vazduh, faza ABC samo 7 stvari (vazduh ugasen)
+Commit: 8c09e38, 776e8cb merged as 3d38378, 548609c merged as 3d9c86b
+Findings: CI+Deploy success; faza A dokazala da samo glavno svaki minut prelazi 100k; merenje u toku
+Result: PASS (merenje, ne proizvodno stanje - vratiti ritam 3 posle)
