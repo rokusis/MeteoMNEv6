@@ -674,3 +674,17 @@ Owner decision: phase A proved bulk alone every minute exceeds 100k/day, and 4 m
 
 Consequence:
 Tests use multiples of 3. Lag meter limit stays 8. Verify with a full clean day.
+
+
+---
+
+# DEC-048 - Free cannot fully cover this scope (measured)
+
+Decision:
+Stay free with a ~3 min promise and accept blocks on lively days (reads serve previous-good). No paid plan (no money, hobby), no second account, no migration.
+
+Why:
+Measured 14.09-03.10: typical day 70-85k writes, lively day over 100k; CPU average 18ms vs 10ms limit. Phase A proved bulk alone every minute exceeds 100k. Alternatives checked and rejected: second Cloudflare account (ban risk), Deno free (300k writes/month = 8x too little), Val Town free (15-min cron), Turso free (writes fit but CPU stays + second system + rewrite), Oracle VPS (nobody to maintain it).
+
+Consequence:
+Capacity test phases A/AB/ABC isolate per-part cost. Daily minimum (T/wind/rain/humidity/pressure/gust/sun) is the protected core. Frontend only after 3 calm days.

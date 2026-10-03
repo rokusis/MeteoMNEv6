@@ -1,9 +1,31 @@
 # HANDOFF — stanje projekta MeteoMNEv6
 
-Datum: 2026-09-10, dopuna 2026-09-22. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
+Datum: 2026-09-10, dopuna 2026-10-03. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
 bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
-(026-044), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
+(026-048), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
 (faza 15), pa ovaj fajl. Ovaj fajl se obnavlja posle svake vece promene.
+
+## Dopuna 2026-10-03 (kapaciteti kriza + faze merenja + ritam 3)
+
+- Free ne moze potpuno stabilno sa ovim obimom (dokazano merenjem, ne nagadanjem):
+  obican dan 70-85k upisa, zivlji dan preko 100k (blokade 21/22/23.09),
+  CPU prosek 18ms prema limitu 10ms (1000+ dnevno, palo na 100+ kad je samo
+  glavno radilo). Novca nema (hobby, neprofitabilno) pa placanje otpada.
+- Faza A (samo glavno svaki minut, 24h): opet preko 100k. Dokaz da samo glavno
+  svaki minut ne staje u besplatno. Faza AB (glavno+grafici+vazduh): isto merenje.
+  Faza ABC (samo 7 stvari: T/vetar/kisa/vlaga/pritisak/udar/sunce): tekuce merenje.
+- Ritam 3 minuta za sve tesko (DEC-047, PR #18): obecanje kasnjenja ~3 min.
+  Sirina sinop otkazana (vlasnik: ne treba). Dnevni zbir racunamo nase iz
+  istorije (vlasnik: jeftinije; dan = ponoc-ponoc lokalno, proveriti miran dan).
+- Alternativne odbijene provereno: drugi Cloudflare nalog + maskiranje (ban rizik,
+  vlasnik pitao - NE), Deno Deploy free (300k upisa/mes = 8x premalo), Val Town
+  free (krug najcesce 15 min - otpada odmah), Turso free (10M upisa stane, ali CPU
+  ostaje na Workers + drugi sistem + prepravka), Oracle+VPS (nema ko da odrzava).
+- Radna kopija preseljena u `C:\Users\Administratör\Documents\MeteoMNEv6` jer je
+  Windows brisao fajlove iz Temp (nestala stara kopija + deo svezeg + git kvar).
+  Token ponovo dodat istim koracima. Vazduh sluzenje zivo (/api/air iz baze).
+- Otvoreno: procenat danasnjeg dana uvece, CPU mejl sutra, ritam vazduha gotov
+  (svaki sat) - sledi prikaz sa frontendom, dnevni zbir nase (sutra), TASK-140/141.
 
 ## Dopuna 2026-09-20 (novi agent, drugi agent ne radi)
 
@@ -86,9 +108,9 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 
 ## Kako se radi (okruzenje, prava, proces)
 
-- Radna kopija OVDE: `C:\Users\ADMINI~1\AppData\Local\Temp\opencode\fresh-MeteoMNEv6`
-  (svez klon na Windows masini vlasnika, 20-21.09, head d0f664e). Na pomocnu granu
-  rev/* pa vlasnik spoji; direktno blokirano zastitom.
+- Radna kopija OVDE: `C:\Users\Administratör\Documents\MeteoMNEv6`
+  (stabilno mesto, preseljeno 2026-10-03 jer je Windows brisao Temp).
+  Na pomocnu granu rev/* pa vlasnik spoji; direktno blokirano zastitom.
 - GitHub token (repo-scoped) stoji SAMO u remote URL-u tog klona + trajno u
   masinskim promenljivama za Cloudflare (nikad u chat). Revoke + brisanje kad vlasnik kaze.
 - Codespace (`/workspaces/MeteoMNEv6`) se ne koristi za kod. Pre bilo kakvog
