@@ -217,10 +217,9 @@ export default {
         return;
       }
       if (event.cron === "* * * * *") {
-        // Ritam 3 minuta (odluka vlasnika, DEC-047): tezak posao samo svaki
-        // treci minut, kasnjenje do ~3 min. Brojke i nebo ostaju gusto.
-        // FAZA AB: glavno + grafici svaki minut radi merenja.
-        const m3 = PHASE_AB_AWS_GRAPH_ONLY ? true : new Date().getUTCMinutes() % 3 === 0;
+        // Ritam 3 minuta (odluka vlasnika): glavno + grafici svaki treci minut.
+        // FAZA ABC: samo 7 stvari, ostalo ugaseno dok vlasnik ne kaze.
+        const m3 = new Date().getUTCMinutes() % 3 === 0;
         try {
           if (m3) {
             const { fetchAndPersist } = await import('./sources/zhms-aws/live');
