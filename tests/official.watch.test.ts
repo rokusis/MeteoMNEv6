@@ -61,7 +61,7 @@ describe('official gusti prozor (danju 2min, nocu 30min)', () => {
     expect(spy).not.toHaveBeenCalled();
     expect(db.rows.length).toBe(0);
   });
-  it('upis samo na promenu, heartbeat jednom dnevno u ponoc', async () => {
+  it('upis samo na promenu, bez dnevnog dokaza', async () => {
     const db = fakeDb();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE1, { status: 200 }) as any);
     const r1 = await runOfficialTick(db, T(11, 12));
@@ -71,16 +71,15 @@ describe('official gusti prozor (danju 2min, nocu 30min)', () => {
     const r2 = await runOfficialTick(db, T(11, 15));
     expect(r2).toEqual({ checked: true, changed: false });
     expect(db.rows.length).toBe(1);
-    // isto, ponoc -> heartbeat
+    // isto, ponoc, bez promene -> bez upisa (zivot dokazuje trag uspeha)
     const r3 = await runOfficialTick(db, T(0, 0));
     expect(r3).toEqual({ checked: true, changed: false });
-    expect(db.rows.length).toBe(2);
-    expect(db.rows[1].status).toBe('same');
+    expect(db.rows.length).toBe(1);
     // promena -> upis
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE2, { status: 200 }) as any);
     const r4 = await runOfficialTick(db, T(12, 51));
     expect(r4).toEqual({ checked: true, changed: true });
-    expect(db.rows[2].status).toBe('changed');
+    expect(db.rows[1].status).toBe('changed');
     // promena odmah osvezava i kes za serviranje
     expect(db.cacheWrites.length).toBeGreaterThan(0);
   });

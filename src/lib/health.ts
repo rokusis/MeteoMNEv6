@@ -71,35 +71,34 @@ export async function checkHealth(db: D1Database, nowMs: number = Date.now()): P
   } catch {}
   out.push({ source: 'synop', state: stateOf(synopAge, synopLimitMin(nowMs)), checkedAgeMin: synopAge, changedAgeMin: synopAge, detail: synopMeta || 'nema termina' });
 
-  const off = await logAges(db, 'official_log', nowMs);
+  const off = await sourceStatusAge(db, 'official', nowMs);
   out.push({
     source: 'official',
-    // Belezska pise samo na promenu + jednom dnevno; pravu smrt javljaju
-    // greske u redu i markeri kruga, pa je granica 25 sati.
-    state: stateOf(off.checked, 1500),
-    checkedAgeMin: off.checked,
-    changedAgeMin: off.changed,
-    detail: off.changed == null ? 'nema promene jos' : `zadnja promena pre ${off.changed} min`,
+    // Jedno pravilo: trag uspeha iz sporog kruga. Sveska sluzi samo za obrazac.
+    state: stateOf(off, 30),
+    checkedAgeMin: off,
+    changedAgeMin: null,
+    detail: 'pisac na 10 min',
   });
 
-  const hyd = await logAges(db, 'hydro_log', nowMs);
+  const hyd = await sourceStatusAge(db, 'hydro', nowMs);
   out.push({
     source: 'hydro',
-    // Isto kao zvanicna: belezska retka, smrt se vidi u greskama i markerima.
-    state: stateOf(hyd.checked, 1500),
-    checkedAgeMin: hyd.checked,
-    changedAgeMin: hyd.changed,
-    detail: hyd.changed == null ? 'nema promene jos' : `zadnja promena pre ${hyd.changed} min`,
+    // Jedno pravilo: trag uspeha iz sporog kruga. Sveska sluzi samo za obrazac.
+    state: stateOf(hyd, 30),
+    checkedAgeMin: hyd,
+    changedAgeMin: null,
+    detail: 'pisac na 10 min',
   });
 
-  const sea = await logAges(db, 'sea_snow_log', nowMs);
+  const sea = await sourceStatusAge(db, 'sea-snow', nowMs);
   out.push({
     source: 'sea-snow',
-    // Isto kao zvanicna: belezska retka, smrt se vidi u greskama i markerima.
-    state: stateOf(sea.checked, 1500),
-    checkedAgeMin: sea.checked,
-    changedAgeMin: sea.changed,
-    detail: sea.changed == null ? 'nema promene jos' : `zadnja promena pre ${sea.changed} min`,
+    // Jedno pravilo: trag uspeha iz sporog kruga. Sveska sluzi samo za obrazac.
+    state: stateOf(sea, 30),
+    checkedAgeMin: sea,
+    changedAgeMin: null,
+    detail: 'pisac na 10 min',
   });
 
   let numDetail = 'nema tura jos';

@@ -7,8 +7,8 @@ export function seaSnowWatchOpen(nowMs: number): boolean {
   return new Date(nowMs).getUTCMinutes() % 3 === 0;
 }
 
-// Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku
-// plus heartbeat jednom dnevno u ponoc da se vidi da straza zivi.
+// Gusti tick: max 1 mali GET po pozivu, D1 upis samo na promenu/gresku.
+// Zivot dokazuje trag uspeha u sporom krugu, ne sveska.
 // Vraca da li je provereno i da li se promenilo.
 export async function runSeaSnowTick(db: D1Database, nowMs: number): Promise<{ checked: boolean; changed: boolean }> {
   if (!seaSnowWatchOpen(nowMs)) return { checked: false, changed: false };
@@ -24,9 +24,9 @@ export async function runSeaSnowTick(db: D1Database, nowMs: number): Promise<{ c
       prev = row?.fingerprint ?? null;
     } catch {}
     const changed = prev == null || prev !== fp;
-    const heartbeat = new Date(nowMs).getUTCMinutes() === 0 && new Date(nowMs).getUTCHours() === 0;
     const status = prev == null ? 'first' : changed ? 'changed' : 'same';
-    if (changed || heartbeat || prev == null) {
+    // Pise se samo na promenu/gresku; prosli otisak mora ostati za poredjenje.
+    if (changed || prev == null) {
       await db
         .prepare(`INSERT INTO sea_snow_log (checked_at, status, fingerprint, sea_count, snow_count) VALUES (?, ?, ?, ?, ?)`)
         .bind(now, status, fp.slice(0, 4000), r.sea.length, r.snow.length)
