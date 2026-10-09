@@ -35,16 +35,16 @@ describe('vazduh merac', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-  it('prvi/same/changed redom', async () => {
+  it('prvi/changed redom, same se ne pise', async () => {
     const db = fakeDb();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE1, { status: 200 }) as any);
     await logAirSentinel(db);
     expect(db.rows[0].status).toBe('first');
     await logAirSentinel(db);
-    expect(db.rows[1].status).toBe('same');
+    expect(db.rows.length).toBe(1);
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PAGE2, { status: 200 }) as any);
     await logAirSentinel(db);
-    expect(db.rows[2].status).toBe('changed');
+    expect(db.rows[1].status).toBe('changed');
   });
   it('otissak se menja promenom datuma', () => {
     const a = airFingerprint([{ id: '3', dateRaw: 'd1', values: [{ pollutant: 'PM10', valueRaw: '43,5' }] }]);
