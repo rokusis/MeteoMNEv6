@@ -18,11 +18,9 @@ export async function logNumericalSentinel(db: D1Database): Promise<void> {
       const lm = res.headers.get("last-modified") || res.headers.get("Last-Modified") || prev.last_modified;
       const etag = res.headers.get("etag") || res.headers.get("ETag") || null;
       const status = String(res.status);
-      // Pisi samo na promenu/gresku + satni heartbeat da se vidi da merac zivi.
-      // Pre je pisao svaki 10-minutni krug i kad nema promene (~288 redova/dan).
+      // Pise se samo na promenu/gresku; zivot dokazuje refresh tabela.
       const changed = prev.last_modified !== lm || prev.status !== status;
-      const heartbeat = new Date().getUTCMinutes() === 0 && new Date().getUTCHours() === 0;
-      if (changed || heartbeat || prev.last_modified == null) {
+      if (changed || prev.last_modified == null) {
         await db.prepare(`INSERT INTO numerical_log (city, model, last_modified, etag, checked_at, status) VALUES (?, ?, ?, ?, ?, ?)`).bind(city, model, lm, etag, now, status).run();
       }
       // Puno povlacenje od 125 fajlova je prebaceno na ture sa kursorom

@@ -29,6 +29,8 @@ export async function logAirSentinel(db: D1Database): Promise<void> {
       prev = row?.fingerprint ?? null;
     } catch {}
     const status = prev == null ? 'first' : prev === fp ? 'same' : 'changed';
+    // Pise se samo na promenu/gresku; prosli otisak mora ostati za poredjenje.
+    if (status === 'same') return;
     await db
       .prepare(`INSERT INTO air_log (checked_at, status, fingerprint, station_count) VALUES (?, ?, ?, ?)`)
       .bind(now, status, fp.slice(0, 4000), r.stations.length)
