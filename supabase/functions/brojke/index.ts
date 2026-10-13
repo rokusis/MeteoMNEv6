@@ -186,6 +186,11 @@ Deno.serve(async () => {
         body: JSON.stringify({ model, last_modified: lm, cursor_idx: finished ? CITIES.length : idx, status: finished ? "done" : "pending", updated_at: now }),
       });
     }
+    await sb("/rest/v1/source_status?on_conflict=source", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ source: "numerical", last_success_at: now, last_fetched_at: now, last_error: null, last_count: done.length }),
+    });
     return Response.json({ status: "ok", cities: done });
   } catch (e: any) {
     return Response.json({ status: "error", message: String(e?.message ?? e).slice(0, 200) });
