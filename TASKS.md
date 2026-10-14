@@ -613,11 +613,32 @@ Status: TODO (owner decision 21.09: air ENTERS; EPA separate adapter stays; API 
 
 # CURRENT NEXT TASK
 
-Live tracker: HANDOFF.md (open items). As of 2026-09-20:
+Live tracker: HANDOFF.md (open items). As of 2026-10-14:
 
-1. Listener switch-off (keep cache refresh, stop log spam) + night-sparse per pattern.
-2. Email watch 2-3 days: D1 79% (reset 16.09) + CPU 1000+ verdict.
-3. Owner decision: air (EPA) in or out, then EPA page fix (no var points).
-4. First reviewer use on next risky change (prompt ready per DEC-034).
-5. TASK-121 schema change detection (real gap, unscheduled).
-6. Frontend only when backend stable.
+1. Supabase vs Cloudflare comparison a few days (7 things only, shorter lines on new).
+2. Daily min/max from our own data (midnight-midnight) + calm-day check.
+3. Frontend reads Supabase (test /supabase-test live).
+4. Quiet Cloudflare ingestion when Supabase proves itself.
+5. TASK-140/141 after 3 calm days.
+
+---
+
+# PHASE 16 - SUPABASE MIGRATION (2026-10-13+, DEC-049)
+
+## TASK-163 - Supabase air serving
+Status: DONE (zrak function + tables + cron 3 min, RLS read-only)
+
+## TASK-164 - Supabase main serving
+Status: DONE (glavno function + tables + cron 3 min, fingerprint per station)
+
+## TASK-165 - Supabase graphs serving
+Status: DONE (grafici function, event-driven, 5 per round, parallel)
+
+## TASK-166 - Supabase rivers + sea + official serving
+Status: DONE (reke, more, zvanicna functions + tables + crons)
+
+## TASK-167 - Supabase numerical + synop serving
+Status: DONE (brojke tours with cursor, nebo term windows)
+
+## TASK-168 - Supabase direct reads + extremes + health
+Status: DONE (RLS anon-read, latest_params RPC, ekstremi + zdravlje functions, /supabase-test)
