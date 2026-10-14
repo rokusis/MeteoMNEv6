@@ -195,7 +195,7 @@ Deno.serve(async () => {
         if (!g1.includes("var DataAll") || !g3.includes("var DataAll")) throw new Error("no DataAll");
         const p1 = parseDataAll(g1);
         const p3 = parseDataAll(g3);
-        const want: [string, any[]][] = [["H", p1.H ?? []], ["P", p3.P ?? []], ["GR", p3.GR ?? []]];
+        const want: [string, any[]][] = [["T", p1.T ?? []], ["H", p1.H ?? []], ["P", p3.P ?? []], ["GR", p3.GR ?? []]];
         const mx = await sb(`/rest/v1/station_timeseries?select=ts&station_id=eq.${encodeURIComponent(d.station_id)}&param=in.(H,P,GR)&order=ts.desc&limit=1`);
         const prevMax = Array.isArray(mx) && mx.length ? mx[0].ts : null;
         const onlyNew = (pts: any[]) => {
