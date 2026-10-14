@@ -184,8 +184,9 @@ Deno.serve(async () => {
     };
     due.sort((a: any, b: any) => Number(isFresh(b)) - Number(isFresh(a)) || ((b.last_snapshot_ms == null ? 9e15 : nowMs - b.last_snapshot_ms) - (a.last_snapshot_ms == null ? 9e15 : nowMs - a.last_snapshot_ms)));
     let updated = 0;
-    for (const d of due.slice(0, LIMIT)) {
-      if (Date.now() - t0 > BUDGET_MS) break;
+    // Sve odjednom: pozivi ka bazi idu mrežom pa jedan po jedan ne stigne
+    // (budžet 20s). Svaka stanica ima svoj try/catch pa jedna ne ruši druge.
+    const serveOne = async (d: any): Promise<boolean> => {
       try {
         const [g1, g3] = await Promise.all([
           fetch(`https://www.meteo.co.me/Meteorologija/aws-graph.php?v=G1&s=${encodeURIComponent(d.station_id)}`, { headers: { "User-Agent": "MeteoMNEv6/1.0" }, client: tls() } as any).then((r) => r.text()),
@@ -201,10 +202,10 @@ Deno.serve(async () => {
           const cut = pts.length > MAX_POINTS ? pts.slice(-MAX_POINTS) : pts;
           return prevMax == null ? cut : cut.filter((p: any) => p.ts > prevMax);
         };
-        for (const [param, pts] of want) {
+        await Promise.all(want.map(async ([param, pts]) => {
           const nn = onlyNew(pts).filter((p: any) => p.value != null);
           if (nn.length) await sball(nn.map((p: any) => ({ station_id: d.station_id, ts: p.ts, param, value: p.value })));
-        }
+        }));
         const snapMs = parseSnapshotMs((snaps ?? []).find((s: any) => s.station_id === d.station_id)?.measured_at_raw ?? null);
         const latestNew = Math.max(0, ...(want.flatMap(([, pts]) => pts.map((p: any) => p.ts))));
         const changed = snapMs != null && latestNew >= snapMs - 5 * 60000;
@@ -217,7 +218,6 @@ Deno.serve(async () => {
           body: JSON.stringify(nx),
         });
         if (changed) {
-          updated++;
           const lag = snapMs == null ? null : Math.round(((nowMs - snapMs) / 60000) * 10) / 10;
           if (lag != null && lag > LAG_LIMIT) {
             const snap = (snaps ?? []).find((s: any) => s.station_id === d.station_id);
@@ -227,15 +227,24 @@ Deno.serve(async () => {
               body: JSON.stringify({ checked_at: now, station_id: d.station_id, lag_min: lag, snapshot_raw: snap?.measured_at_raw ?? null }),
             });
           }
+          return true;
         }
+        return false;
       } catch {
-        const snapMs = parseSnapshotMs((snaps ?? []).find((s: any) => s.station_id === d.station_id)?.measured_at_raw ?? null);
-        await sb("/rest/v1/graph_state?on_conflict=station_id", {
-          method: "POST",
-          headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-          body: JSON.stringify({ station_id: d.station_id, last_snapshot_ms: snapMs ?? d.last_snapshot_ms, last_check_ms: nowMs, last_change_ms: d.last_change_ms, miss: (d.miss ?? 0) + 1, done_ms: d.done_ms, updated_at: now }),
-        });
+        try {
+          const snapMs = parseSnapshotMs((snaps ?? []).find((s: any) => s.station_id === d.station_id)?.measured_at_raw ?? null);
+          await sb("/rest/v1/graph_state?on_conflict=station_id", {
+            method: "POST",
+            headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+            body: JSON.stringify({ station_id: d.station_id, last_snapshot_ms: snapMs ?? d.last_snapshot_ms, last_check_ms: nowMs, last_change_ms: d.last_change_ms, miss: (d.miss ?? 0) + 1, done_ms: d.done_ms, updated_at: now }),
+          });
+        } catch {}
+        return false;
       }
+    };
+    if (Date.now() - t0 < BUDGET_MS) {
+      const flags = await Promise.all(due.slice(0, LIMIT).map(serveOne));
+      updated = flags.filter(Boolean).length;
     }
     await sb("/rest/v1/source_status?on_conflict=source", {
       method: "POST",
