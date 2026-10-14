@@ -109,6 +109,37 @@ async function sb(path: string, init?: RequestInit): Promise<any> {
   return t ? JSON.parse(t) : null;
 }
 
+// Cuvar oblika: drugaciji oblik se broji, treci isti za redom postaje novo
+// normalno. Jedno djubre nikad ne prodje. Vraca true ako sme da pise.
+async function checkSchema(source: string, fp: string): Promise<boolean> {
+  const now = new Date().toISOString();
+  let row: any = null;
+  try {
+    const r = await sb(`/rest/v1/schema_state?select=fingerprint,pending_fp,pending_hits&source=eq.${source}`);
+    row = Array.isArray(r) && r.length ? r[0] : null;
+  } catch {}
+  if (!row || row.fingerprint == null) {
+    try {
+      if (!row) await sb("/rest/v1/schema_state", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ source, fingerprint: fp, pending_fp: null, pending_hits: 0, updated_at: now }) });
+      else await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ fingerprint: fp, pending_fp: null, pending_hits: 0, updated_at: now }) });
+    } catch {}
+    return true;
+  }
+  if (row.fingerprint === fp) {
+    if (row.pending_fp != null) {
+      try { await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ pending_fp: null, pending_hits: 0, updated_at: now }) }); } catch {}
+    }
+    return true;
+  }
+  const hits = row.pending_fp === fp ? (row.pending_hits ?? 0) + 1 : 1;
+  if (hits >= 3) {
+    try { await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ fingerprint: fp, pending_fp: null, pending_hits: 0, updated_at: now }) }); } catch {}
+    return true;
+  }
+  try { await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ pending_fp: fp, pending_hits: hits, updated_at: now }) }); } catch {}
+  return false;
+}
+
 Deno.serve(async () => {
   const now = new Date().toISOString();
   try {
@@ -120,6 +151,10 @@ Deno.serve(async () => {
     if (!sm || !pm) throw new Error("AWS vars missing");
     const stArr = JSON.parse(cleanJson(sm[1])) as any[];
     const posObj = JSON.parse(cleanJson(pm[1])) as Record<string, any[]>;
+    const groups = Object.values(posObj);
+    const firstRows = groups.length && Array.isArray(groups[0]) ? (groups[0] as any[]) : [];
+    const schFp = `stanice:${stArr.length}x${stArr.length ? stArr[0].length : 0}|posljednje:${groups.length}x${firstRows.length ? firstRows[0].length : 0}`;
+    if (!(await checkSchema("aws", schFp))) throw new Error("AWS schema change, sacuvano prethodno");
     const stMap = new Map<string, any>();
     for (const r of stArr) {
       const id = String(r[0] ?? "").trim();
