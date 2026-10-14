@@ -688,3 +688,17 @@ Measured 14.09-03.10: typical day 70-85k writes, lively day over 100k; CPU avera
 
 Consequence:
 Capacity test phases A/AB/ABC isolate per-part cost. Daily minimum (T/wind/rain/humidity/pressure/gust/sun) is the protected core. Frontend only after 3 calm days.
+
+
+---
+
+# DEC-049 - Selidba na Supabase (podaci + citanje)
+
+Decision:
+Svi izvori sele se na Supabase Edge Functions + pg_cron + tabele; citanje direktno iz tabela (anon samo cita), ekstremi malim programom. Cloudflare ostaje zamrznut dok Supabase ne dokaze par dana.
+
+Why:
+Cloudflare free puca zivljim danima i posle svih dijeta (100k upisa, CPU 10ms); novca nema. Supabase free ima viska 10-30 puta na pozivima, bazi i CPU. Proverene alternative otpadaju (Deno 8x premalo, Val Town 15-min krug, Turso ostavlja CPU, Oracle nema ko da odrzava).
+
+Consequence:
+Sema i poslovi su u supabase/ u repou. DENO_CERT tajna nosi TLS lanac (ISRG X2). RLS: anon cita, pise samo tajni kljuc. Redosled: vazduh, glavno, grafici, reke, more, zvanicna, brojke, nebo, ekstremi, zdravlje.
