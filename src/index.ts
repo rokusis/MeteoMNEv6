@@ -1,6 +1,32 @@
 import { getObservations, getCache } from './sources/zhms-aws/live';
 import { calcExtremes } from './lib/extremes';
-export interface Env { DB?: D1Database; APP_NAME?: string; }
+export interface Env { DB?: D1Database; APP_NAME?: string; SUPABASE_URL?: string; SUPABASE_ANON_KEY?: string; }
+
+// Probna strana: cita Supabase direktno (bez programa izmedju).
+// Stara strana se ne dira dok nova ne dokaze par dana.
+const SUPABASE_TEST_PAGE = `<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MeteoMNE Supabase proba</title><style>body{font-family:system-ui,sans-serif;margin:0;background:#f6f8fb;color:#0f172a}header{background:#16a34a;color:white;padding:16px 20px}h1{margin:0;font-size:20px}main{max-width:1000px;margin:0 auto;padding:16px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}.card{border:1px solid #e2e8f0;border-radius:10px;padding:10px;background:#fff}.card b{font-size:18px}small{color:#64748b}</style></head><body><header><h1>MeteoMNE Supabase proba</h1><small id="status">ucitavanje...</small></header><main><div id="list" class="grid">ucitavanje...</div></main><script>
+const SB='__SB_URL__', KEY='__SB_KEY__';
+async function j(p){ const r=await fetch(SB+'/rest/v1/'+p,{headers:{apikey:KEY}}); return r.json(); }
+async function rpc(p){ const r=await fetch(SB+'/rest/v1/rpc/'+p,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:'{}'}); return r.json(); }
+async function load(){
+  try{
+    const [obs, st, lp] = await Promise.all([
+      j('observations?select=*'),
+      j('stations?select=station_id,name'),
+      rpc('latest_params'),
+    ]);
+    const names = {}; (st||[]).forEach(s=>names[s.station_id]=s.name);
+    const par = {}; (Array.isArray(lp)?lp:[]).forEach(r=>{ (par[r.station_id]=par[r.station_id]||{})[r.param]=r; });
+    document.getElementById('status').textContent = 'Supabase: ' + (obs||[]).length + ' stanica';
+    document.getElementById('list').innerHTML = (obs||[]).map(o=>{
+      const m = par[o.station_id]||{};
+      const f = (n,v)=> v==null?'-':v;
+      return '<div class=card><b>'+(names[o.station_id]||o.station_id)+'</b><br><b style="font-size:20px">'+f(0,o.temperature_c)+' C</b><br><small>'+(o.measured_at_raw||'')+'</small><br>vjetar: '+f(0,o.wind_speed_ms)+' m/s<br>kisa: '+f(0,o.precipitation_mm)+' mm<br>vlaga: '+f(0,(m.H||{}).value)+' %<br>pritisak: '+f(0,(m.P||{}).value)+' hPa<br>udar: '+f(0,o.gust_ms)+' m/s<br>sunce: '+f(0,(m.GR||{}).value)+' W/m2</div>';
+    }).join('');
+  }catch(e){ document.getElementById('status').textContent = 'greska: '+e; }
+}
+load();
+<\/script></body></html>`;
 const PAGE = `<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MeteoMNE</title><style>body{font-family:system-ui,sans-serif;margin:0;background:#f6f8fb;color:#0f172a}header{background:#0ea5e9;color:white;padding:16px 20px;position:sticky;top:0}h1{margin:0;font-size:20px}main{max-width:1000px;margin:0 auto;padding:16px}section{background:white;border-radius:12px;padding:14px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.06)}h2{margin:0 0 8px;font-size:16px}small{color:#64748b}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}.card{border:1px solid #e2e8f0;border-radius:10px;padding:10px}.pill{display:inline-block;font-size:12px;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:999px;margin-top:6px}.extremes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.ext{border:1px solid #e2e8f0;border-radius:10px;padding:10px;background:#fff}.ext b{font-size:18px}#q{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:8px 0}</style></head><body><header><h1>MeteoMNE — uživo sa meteo.co.me</h1><small id="status">učitavanje...</small></header><main><section><h2>Aktuelni min/max <small>(u zadnjih 1 sat, vrijeme diskretno)</small></h2><div id="extremes" class="extremes">učitavanje...</div></section><section><h2>Sve stanice <small id="count"></small></h2><input id="q" placeholder="traži: Podgorica, Bar, Žabljak..."><div id="list" class="grid">učitavanje...</div></section><section><h2>Grafik temperature <small id="gtitle">(klikni stanicu)</small></h2><div style="margin:6px 0"><small>Grupa:</small> <button onclick="setGroup('TH')">T+H</button> <button onclick="setGroup('RR')">Kiša</button> <button onclick="setGroup('BRV')">Vjetar</button> <button onclick="setGroup('P')">Pritisak</button> <button onclick="setGroup('GR')">Insolacija</button> <span style="margin-left:12px"><small>Raspon:</small> <button onclick="setRange(24)">24h</button> <button onclick="setRange(48)">48h</button> <button onclick="setRange(500)">Sve</button></span> <small id="ginfo"></small></div><canvas id="chart" width="800" height="200" style="width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:8px;cursor:crosshair;"></canvas><small id="gtip" style="display:block;height:14px;color:#0369a1;"></small></section><section><h2>Numerička prognoza 5 dana <small id="numStatus"></small></h2><div style="margin:6px 0"><label>Grad: <select id="numCity"><option value="POD">Podgorica</option><option value="BUD">Budva</option><option value="BAR">Bar</option><option value="HER">Herceg Novi</option><option value="KOT">Kotor</option><option value="TIV">Tivat</option><option value="ULC">Ulcinj</option><option value="CET">Cetinje</option><option value="NIK">Nikšić</option><option value="BER">Berane</option><option value="BIJ">Bijelo Polje</option><option value="ZAB">Žabljak</option><option value="PLJ">Pljevlja</option></select></label> <label>Model: <select id="numModel"><option value="e3km">e3km (ECMWF)</option><option value="a3km">a3km (NCEP)</option></select></label> <button onclick="loadNum()">Učitaj</button></div><div id="numList"><small>izaberi grad i model pa Učitaj</small></div></section><section><h2>Zvanična prognoza <small id="offStatus"></small></h2><div id="offList"><small>učitavanje...</small></div></section><section><h2>Hidrologija <small id="hydroStatus"></small></h2><div id="hydroList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px"><small>učitavanje...</small></div></section><section><h2>More i snijeg <small id="seaSnowStatus"></small></h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><h3 style="margin:0 0 6px;font-size:14px">More</h3><div id="seaList"><small>učitavanje...</small></div></div><div><h3 style="margin:0 0 6px;font-size:14px">Snijeg</h3><div id="snowList"><small>učitavanje...</small></div></div></div></section><section><h2>Tehnički katalog <small id="catStatus"></small></h2><div id="catList" class="grid"><small>učitavanje...</small></div></section></main><script>
 async function j(u){const r=await fetch(u);return r.json()}
 function card(s){const syn=s.synopText?'<br><small>nebo: '+s.synopText+'</small>':'';const t=s.temperatureC!=null?s.temperatureC.toFixed(1)+'°C':'—';const w=s.windSpeedMs!=null?s.windSpeedMs+' m/s'+(s.windCompass?' '+s.windCompass:''):'—';const p=s.precipitationMm!=null?s.precipitationMm+' mm':'—';const h=s.humidityPct!=null?s.humidityPct+' %':'—';const pr=s.pressureHpa!=null?String(s.pressureHpa).replace('.',',')+' hPa':'—';const uu=s.gustMs!=null?s.gustMs+' m/s':'—';const ins=s.insolationWm2!=null?s.insolationWm2+' W/m2':'—';return '<div class=card><b>'+s.stationName+'</b><br><b style="font-size:20px">'+t+'</b><br><small>'+s.measuredAtRaw+'</small>'+syn+'<br><small>vjetar: '+w+'<br>kiša: '+p+'<br>vlaga: '+h+'<br>pritisak: '+pr+'<br>udar: '+uu+'<br>sunce: '+ins+'</small><div class=pill>'+s.stationId+'</div></div>';}
@@ -320,6 +346,12 @@ export default {
   },
   async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    if (url.pathname === '/supabase-test') {
+      const html = SUPABASE_TEST_PAGE
+        .replaceAll('__SB_URL__', env.SUPABASE_URL ?? '')
+        .replaceAll('__SB_KEY__', env.SUPABASE_ANON_KEY ?? '');
+      return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+    }
     if (url.pathname === '/' || url.pathname === '/index.html') return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
     // Dijagnostika uvek ziva; ostale API rute iz ivicnog kesa 60s.
     if (!url.pathname.startsWith('/api/') || url.pathname === '/api/graph-debug' || url.pathname === '/api/health') return (this as any).handleApi(request, env);
