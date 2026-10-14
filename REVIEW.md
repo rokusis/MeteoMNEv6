@@ -1,4 +1,4 @@
-# REVIEW
+﻿# REVIEW
 ## Montenegro Weather App — technical review log
 
 This file is intentionally a living record.
@@ -413,3 +413,12 @@ Scope: faza A samo glavno svaki minut, faza AB +grafici+vazduh, faza ABC samo 7 
 Commit: 8c09e38, 776e8cb merged as 3d38378, 548609c merged as 3d9c86b
 Findings: CI+Deploy success; faza A dokazala da samo glavno svaki minut prelazi 100k; merenje u toku
 Result: PASS (merenje, ne proizvodno stanje - vratiti ritam 3 posle)
+
+
+---
+## REVIEW-042 - supabase selidba progami (PR #25-#35)
+Date: 2026-10-13/14
+Reviewer: AI agent + vlasnik (direktno)
+Scope: zrak, glavno, grafici, reke, more, zvanicna, brojke, nebo, ekstremi, zdravlje; sema u supabase/schemas
+Findings: svaki program proveren rucnim pozivom pre zakazivanja (stanice/brojevi navedeni); TLS lanac resen posle 3 pokusaja (DENO_CERT + rucni klijent); grafici prepravljeni na uporedo posle kasnjenja 40+ min; RLS rupa na 8 tabela nadjena samokontrolom i zakljucana; CI+Deploy success za papire
+Result: PASS (uzivo dokaz po program)
