@@ -1,9 +1,30 @@
 # HANDOFF — stanje projekta MeteoMNEv6
 
-Datum: 2026-09-10, dopuna 2026-10-03. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
+Datum: 2026-09-10, dopuna 2026-10-14. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
 bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
-(026-048), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
+(026-049), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
 (faza 15), pa ovaj fajl. Ovaj fajl se obnavlja posle svake vece promene.
+
+## Dopuna 2026-10-14 (selidba na Supabase)
+
+- Razlog: Cloudflare free puca zivljim danima (100k upisa, CPU 10ms) i posle
+  svih dijeta. Novca nema pa se seli na Supabase free (500MB, 500k poziva,
+  2s CPU, krug svaki minut moze). Preseleno redom: vazduh, glavno, grafici,
+  reke, more, zvanicna, brojke, nebo. Ostalo citanje direktno iz tabela +
+  ekstremi programom. Cloudflare ostaje zamrznut dok Supabase ne dokaze par dana.
+- Redosled selidbe i satnice: zrak-3min, glavno-3min, grafici-3min, reke-3min,
+  more-3min, zvanicna-5min, brojke-3min, nebo-10min (termini 07/14/21).
+  Sema i poslovi su u supabase/schemas/ u repou (izvor istine).
+- Vazne lekcije selidbe: izvor ima noviji TLS lanac (ISRG X2) kog Deno nema -
+  lanac ide u kod svake funkcije; grafici moraju uporedo (red-cekanje pravilo
+  40+ min kasnjenje); 8 pomocnih tabela bilo otkljucano za upis - zakljucano;
+  anon sme samo da cita, pise samo tajni kljuc.
+- Kljucevi: Cloudflare token u masinskim promenljivima; Supabase URL + anon +
+  tajni + upravljacki kljuc u masinskim promenljivima (nikad u chat); DENO_CERT
+  tajna u Supabase za TLS lanac. Nalog isti, projekat meteomne.
+- Otvoreno: poredjenje Cloudflare vs Supabase par dana; dnevni zbir nase;
+  prednja strana cita Supabase (probna adresa /supabase-test ziva);
+  TASK-140/141 kad 3 mirna dana; token rok prosao - proveriti novi rok.
 
 ## Dopuna 2026-10-03 (kapaciteti kriza + faze merenja + ritam 3)
 
@@ -176,14 +197,13 @@ bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 - Vazduh: 36 zapisa samo 09.09, merac nije vezan + strana bez var points.
   Odluka vlasnika 21.09: vazduh ULAZI posle merenja (DEC-042, TASK-162).
 
-## Otvoreno / sledece (21.09)
+## Otvoreno / sledece (14.10)
 
-1. Danasnji procenat upisa uvece + sutrasnji CPU mejl (presuda dijete).
-2. Jutarnje ture ~08:50/11:30 i dnevno kasnjenje ispod 3 min.
-3. Ritam vazduha kroz par dana (meri od 21.09), vazduh ULAZI (DEC-042).
-4. Proces provere je sad zastita + vlasnik spoji (drugog modela nema).
-5. Finalni frontend tek kad backend stabilan.
-6. Token rok ~2026-10-08 — podsetiti na vreme.
+1. Poredjenje Cloudflare vs Supabase par dana (samo 7 stvari, linije krace na novoj).
+2. Dnevni zbir nase (ponoc-ponoc) + provera miran dan.
+3. Prednja strana cita Supabase (probna /supabase-test ziva).
+4. Stisavanje Cloudflare kruga kad Supabase dokaze.
+5. TASK-140/141 kad 3 mirna dana.
 
 ## Zamke (ne ponavljati)
 
