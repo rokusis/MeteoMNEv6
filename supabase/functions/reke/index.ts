@@ -87,6 +87,37 @@ async function sb(path: string, init?: RequestInit): Promise<any> {
   return t ? JSON.parse(t) : null;
 }
 
+// Cuvar oblika: drugaciji oblik se broji, treci isti za redom postaje novo
+// normalno. Jedno djubre nikad ne prodje. Vraca true ako sme da pise.
+async function checkSchema(source: string, fp: string): Promise<boolean> {
+  const now = new Date().toISOString();
+  let row: any = null;
+  try {
+    const r = await sb(`/rest/v1/schema_state?select=fingerprint,pending_fp,pending_hits&source=eq.${source}`);
+    row = Array.isArray(r) && r.length ? r[0] : null;
+  } catch {}
+  if (!row || row.fingerprint == null) {
+    try {
+      if (!row) await sb("/rest/v1/schema_state", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ source, fingerprint: fp, pending_fp: null, pending_hits: 0, updated_at: now }) });
+      else await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ fingerprint: fp, pending_fp: null, pending_hits: 0, updated_at: now }) });
+    } catch {}
+    return true;
+  }
+  if (row.fingerprint === fp) {
+    if (row.pending_fp != null) {
+      try { await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ pending_fp: null, pending_hits: 0, updated_at: now }) }); } catch {}
+    }
+    return true;
+  }
+  const hits = row.pending_fp === fp ? (row.pending_hits ?? 0) + 1 : 1;
+  if (hits >= 3) {
+    try { await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ fingerprint: fp, pending_fp: null, pending_hits: 0, updated_at: now }) }); } catch {}
+    return true;
+  }
+  try { await sb(`/rest/v1/schema_state?source=eq.${source}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ pending_fp: fp, pending_hits: hits, updated_at: now }) }); } catch {}
+  return false;
+}
+
 Deno.serve(async () => {
   const now = new Date().toISOString();
   try {
@@ -109,6 +140,12 @@ Deno.serve(async () => {
       }
     }
     const obObj = JSON.parse(cleanJson(pm[1])) as Record<string, Record<string, any[]>>;
+    const stGroups = Object.values(stObj);
+    const obGroups = Object.values(obObj);
+    const stFirst = stGroups.length && Array.isArray(stGroups[0]) ? (stGroups[0] as any[]) : [];
+    const obFirst = obGroups.length ? (Object.values((obGroups[0] ?? {}) as Record<string, any[]>).find((r) => Array.isArray(r)) as any[] ?? []) : [];
+    const schFp = `staniceH:${stGroups.length}x${stFirst.length ? stFirst[0].length : 0}|posljednje:${obGroups.length}x${obFirst.length ? obFirst.length : 0}`;
+    if (!(await checkSchema("hydro", schFp))) throw new Error("hydro schema change, sacuvano prethodno");
     const obs: any[] = [];
     for (const group of Object.values(obObj)) {
       for (const [sid, r] of Object.entries(group as Record<string, any[]>)) {
