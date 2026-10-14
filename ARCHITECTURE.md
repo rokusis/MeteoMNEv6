@@ -576,3 +576,30 @@ Any significant change must be:
 5. reflected in tasks if implementation work changes.
 
 No silent architecture drift.
+
+---
+
+# 26. SUPABASE BACKEND (LIVE since 2026-10-13, DEC-049)
+
+Same pipeline as Cloudflare, second home:
+
+```text
+ZHMS/EPA PUBLIC SOURCES
+        |
+Edge Functions (one per part: zrak, glavno, grafici, reke, more,
+zvanicna, brojke, nebo) + ekstremi + zdravlje (read-only)
+        |
+pg_cron (every 3 min; zvanicna 5, nebo 10 min)
+        |
+Postgres tables (see supabase/schemas/tables.sql)
+        |
+direct reads by frontend (anon reads only) + RLS (writes: secret key only)
+```
+
+Rules carried over:
+- write only on change + previous-good guard, never overwrite fuller with smaller;
+- errors are recorded, never thrown away silently;
+- TLS chain bundled in code (ISRG X2, source uses a newer chain Deno lacks);
+- no secrets in repo (keys live in machine variables + Supabase Secrets).
+
+Cloudflare stays frozen until Supabase proves a few calm days.
