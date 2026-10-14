@@ -1,0 +1,18 @@
+-- Supabase redosled poslova (pg_cron) + citanje za prednju stranu.
+-- Pravilo: svaka promena satnice ide prvo ovde pa tek onda u bazu.
+--
+-- Poslovi (svi zovu Edge Function preko pg_net http_post):
+--   zrak-10min      -> zrak      (vazduh; ime staro, satnica je svaka 3 min)
+--   glavno-3min     -> glavno    (AWS bulk, svaka 3 min)
+--   grafici-3min    -> grafici   (H/P/GR na dogadjaj, svaka 3 min)
+--   reke-3min       -> reke      (hidrologija, svaka 3 min)
+--   more-3min       -> more      (more/sneg, svaka 3 min)
+--   zvanicna-5min   -> zvanicna  (prognoza, svakih 5 min)
+--   brojke-3min     -> brojke    (ture 2 grada, svaka 3 min)
+--   nebo-10min      -> nebo      (termini 07/14/21, svakih 10 min)
+--
+-- Citanje za prednju stranu (direktno iz tabela, bez programa izmedju):
+--   stations, observations, latest_params() RPC, air_cache, official_cache,
+--   sea_snow_cache, hydro_cache, synop_cache, numerical_days/hours/refresh,
+--   ekstremi (funkcija), zdravlje (funkcija).
+-- Zakljucano: anon sme samo da cita (RLS read politike); pise samo tajni kljuc.
