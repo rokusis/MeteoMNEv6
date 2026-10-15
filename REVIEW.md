@@ -422,3 +422,12 @@ Reviewer: AI agent + vlasnik (direktno)
 Scope: zrak, glavno, grafici, reke, more, zvanicna, brojke, nebo, ekstremi, zdravlje; sema u supabase/schemas
 Findings: svaki program proveren rucnim pozivom pre zakazivanja (stanice/brojevi navedeni); TLS lanac resen posle 3 pokusaja (DENO_CERT + rucni klijent); grafici prepravljeni na uporedo posle kasnjenja 40+ min; RLS rupa na 8 tabela nadjena samokontrolom i zakljucana; CI+Deploy success za papire
 Result: PASS (uzivo dokaz po program)
+
+
+---
+## REVIEW-043 - supabase dnevni + grafici-T + zdravlje (PR #42 + #43)
+Date: 2026-10-14/15
+Reviewer: AI agent + vlasnik (direktno)
+Scope: dnevni min/max iz nase istorije, grafici cuvaju i T, zdravlje + trag brojkama
+Findings: formula dana kasnila dan unazad - uhvacena proverom prazne tabele, popravljena, dokazano redovima (Ubli 10.04/17.09); CI+Deploy success
+Result: PASS
