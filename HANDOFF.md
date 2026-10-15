@@ -1,9 +1,25 @@
 # HANDOFF — stanje projekta MeteoMNEv6
 
-Datum: 2026-09-10, dopuna 2026-10-14. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
+Datum: 2026-09-10, dopuna 2026-10-15. Namenjeno sledecem AI agentu (bilo koji model) da nastavi
 bez prethodnog chata. Prvo procitaj MASTER_SPECIFICATION.md, DECISIONS.md
 (026-049), ARCHITECTURE.md, ZHMS_FORENSIC_EVIDENCE.md (§25), TASKS.md
-(faza 15), pa ovaj fajl. Ovaj fajl se obnavlja posle svake vece promene.
+(faza 15-16), pa ovaj fajl. Ovaj fajl se obnavlja posle svake vece promene.
+
+## Dopuna 2026-10-15 (Supabase radi, Cloudflare zamrznut na 7 stvari)
+
+- Na Supabase zivi sve: zrak, glavno, grafici, reke, more, zvanicna, brojke,
+  nebo (termini), ekstremi, zdravlje, dnevni min/max. Satnice 3/5/10 min.
+  Sema i poslovi su u supabase/ u repou. RLS: anon cita, pise samo tajni kljuc.
+- Probna adresa /supabase-test cita Supabase direktno i pokazuje isto kao stara
+  (sitne razlike grafikona su red cekanja dva nezavisna kruga, dokazano brojevima).
+- Cloudflare faza ABC: samo 7 stvari (T/vetar/kisa/vlaga/pritisak/udar/sunce),
+  ostalo ugaseno dok vlasnik ne kaze. Dnevni zbir: nase, ponoc-ponoc, program
+  dnevni radi nocu. Sirina sinop otkazana.
+- Otvoreno: poredjenje par dana, stisavanje Cloudflare kad Supabase dokaze,
+  prednja strana na Supabase, dnevni prikaz, TASK-140/141 kad 3 mirna dana.
+- Kljucevi: GitHub token obnavljan (isti koraci); Supabase URL+anon+tajni+
+  upravljacki u masinskim promenljivima; DENO_CERT tajna nosi TLS lanac.
+  Supabase salje mejl pred ogranicenje (ne iznenada).
 
 ## Dopuna 2026-10-14 (selidba na Supabase)
 

@@ -607,7 +607,7 @@ Status: IN PROGRESS (numerical logger write-on-change 66d022b; saveStations dual
 Status: DONE PROCESS 2026-09-21 (drugog modela nema; proces je zastita glavne grane + pomocna grana + masina + vlasnik spoji; dokazano na PR #1/#4/#5)
 
 ## TASK-162 — Air API and display (after pattern)
-Status: TODO (owner decision 21.09: air ENTERS; EPA separate adapter stays; API + cards + checks by measured pattern only after a few days of measurement)
+Status: DONE SERVING 2026-10-13 (zrak + air_cache na Supabase; display sa frontendom)
 
 ---
 
@@ -642,3 +642,6 @@ Status: DONE (brojke tours with cursor, nebo term windows)
 
 ## TASK-168 - Supabase direct reads + extremes + health
 Status: DONE (RLS anon-read, latest_params RPC, ekstremi + zdravlje functions, /supabase-test)
+
+## TASK-169 - Supabase daily min/max
+Status: DONE 2026-10-14 (dnevni function nightly, dnevni_min_max table, midnight-midnight local; T added to grafici)
